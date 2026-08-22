@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HR Onboarding Portal</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header id="pageHero" class="page-hero">
+    <div>
+      <p class="eyebrow">Employee onboarding portal</p>
+      <h1>HR Onboarding Assistant</h1>
+      <p>
+        Ask onboarding questions grounded in the provided FAQ and policy
+        documents, create tasks, and check task status conversationally.
+      </p>
+    </div>
+  </header>
+
+  <nav id="menuTabs" class="menu-tabs" aria-label="Application menu">
+    <button type="button" class="menu-btn active" data-menu="chat">Chat and Tasks</button>
+    <button type="button" class="menu-btn" data-menu="exam">Quiz Exam</button>
+    <button id="themeToggleBtn" type="button" class="theme-btn">Dark Mode</button>
+  </nav>
+
+  <main id="chatMenu" class="app menu-page active">
+    <section class="chat-panel">
+      <header class="top-bar">
+        <div>
+          <h2>Conversation</h2>
+          <p>Ask questions, create tasks, or check task status.</p>
+        </div>
+        <span id="quizBadge" class="status-dot">Ready</span>
+      </header>
+
+      <div id="chatBox" class="chat-box" aria-live="polite"></div>
+
+      <div class="quick-actions">
+        <button type="button" class="quick-btn">Office Timings</button>
+        <button type="button" class="quick-btn">Leave Types</button>
+        <button type="button" class="quick-btn">IT Setup</button>
+        <button type="button" class="quick-btn">Start quiz</button>
+      </div>
+
+      <form id="chatForm" class="chat-form">
+        <input
+          id="userInput"
+          type="text"
+          placeholder="Ask about timings, uniform, lunch, leaves, or type Start quiz"
+          autocomplete="off"
+          required
+        >
+        <button id="micBtn" type="button" class="mic-btn" title="Speak to Assistant">🎤</button>
+        <button type="submit">Send</button>
+      </form>
+    </section>
+
+    <aside class="side-panel">
+      <section class="task-panel">
+        <div class="task-header">
+          <div>
+            <p class="eyebrow">Task tracker</p>
+            <h2>Onboarding Tasks</h2>
+          </div>
+          <button id="clearTasksBtn" type="button">Clear</button>
+        </div>
+        <div class="task-summary">
+          <div>
+            <span id="openCount">0</span>
+            <p>Open</p>
+          </div>
+          <div>
+            <span id="doneCount">0</span>
+            <p>Done</p>
+          </div>
+          <div>
+            <span id="progressCount">0%</span>
+            <p>Progress</p>
+          </div>
+        </div>
+        <form id="taskForm" class="task-form">
+          <input
+            id="taskInput"
+            type="text"
+            placeholder="Type a task, e.g. submit tax forms"
+            autocomplete="off"
+            required
+          >
+          <button type="submit">Add Task</button>
+        </form>
+        <ul id="taskList" class="task-list"></ul>
+        <p class="hint">
+          Type a task above and click Add Task. You can also ask the bot:
+          "show my tasks" or "mark laptop setup done".
+        </p>
+      </section>
+    </aside>
+  </main>
+
+  <section id="examMenu" class="exam-page menu-page">
+    <div class="exam-shell">
+      <header class="exam-mainbar">
+        <div class="exam-breadcrumb">
+          <span>HR Onboarding Test</span>
+          <span>›</span>
+          <span>Policy Assessment</span>
+        </div>
+        <div class="exam-top-actions">
+          <button id="backToChatBtn" type="button" class="exam-link-btn">Exit</button>
+          <button id="submitAnswerBtn" type="button" class="review-submit-btn" disabled>Review and Submit</button>
+        </div>
+      </header>
+
+      <div class="exam-layout not-started">
+        <aside class="exam-palette-panel">
+          <p class="palette-title">Questions</p>
+          <div id="questionPalette" class="question-palette"></div>
+        </aside>
+
+        <main class="exam-main-panel">
+          <header class="exam-header">
+        <div>
+          <p class="eyebrow">Quiz exam</p>
+          <h2>Onboarding Policy Assessment</h2>
+          <p>Answer one question at a time. Select the best option and submit.</p>
+        </div>
+        <span id="examStatus" class="status-dot">Not started</span>
+          </header>
+
+          <div class="exam-card">
+            <div class="exam-top">
+              <span id="examCounter">Question 0 of 0</span>
+              <span id="examScore">Score: 0</span>
+            </div>
+            <div class="exam-progress">
+              <div id="examProgressFill"></div>
+            </div>
+            <h3 id="examQuestion">Click Start Exam to begin.</h3>
+            <div id="examOptions" class="exam-options"></div>
+            <p id="examResult" class="exam-result"></p>
+            <div class="exam-actions">
+              <button id="startExamBtn" type="button">Start Exam</button>
+              <button id="clearAnswerBtn" type="button" class="clear-response-btn" disabled>Clear Response</button>
+              <button id="nextQuestionBtn" type="button" disabled>Save and Next</button>
+              <button id="bottomReviewBtn" type="button" style="display: none; background: #0f2f75; border: 1px solid transparent; border-radius: 7px; padding: 12px 17px; color: #ffffff; font-weight: bold;">Review</button>
+            </div>
+          </div>
+        </main>
+
+        <aside class="exam-side-panel">
+          <section class="timer-card">
+            <div id="examTimer" class="timer-value">20:00</div>
+            <div class="timer-labels">
+              <span>Min</span>
+              <span>Sec</span>
+            </div>
+            <button id="aboutTestBtn" type="button" class="side-soft-btn">About Test</button>
+            <button id="readInstructionsBtn" type="button" class="side-soft-btn">Read Instructions</button>
+          </section>
+
+          <section class="overview-card">
+            <h3>Overview</h3>
+            <dl>
+              <div><dt>Total Questions</dt><dd id="totalQuestionsCount">0</dd></div>
+              <div><dt>Visited</dt><dd id="visitedCount">0</dd></div>
+              <div><dt>Not Visited</dt><dd id="notVisitedCount">0</dd></div>
+              <div><dt>Answered</dt><dd id="answeredCount">0</dd></div>
+              <div><dt>Not Answered</dt><dd id="notAnsweredCount">0</dd></div>
+            </dl>
+          </section>
+        </aside>
+      </div>
+    </div>
+  </section>
+
+  <script src="script.js"></script>
+</body>
+</html>
