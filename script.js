@@ -13,6 +13,7 @@ const menuButtons = document.querySelectorAll(".menu-btn");
 const pageHero = document.getElementById("pageHero");
 const menuTabs = document.getElementById("menuTabs");
 const themeToggleBtn = document.getElementById("themeToggleBtn");
+const homeMenu = document.getElementById("homeMenu");
 const chatMenu = document.getElementById("chatMenu");
 const examMenu = document.getElementById("examMenu");
 const quizBadge = document.getElementById("quizBadge");
@@ -26,9 +27,13 @@ const examResult = document.getElementById("examResult");
 const startExamBtn = document.getElementById("startExamBtn");
 const submitAnswerBtn = document.getElementById("submitAnswerBtn");
 const nextQuestionBtn = document.getElementById("nextQuestionBtn");
+const prevQuestionBtn = document.getElementById("prevQuestionBtn");
 const clearAnswerBtn = document.getElementById("clearAnswerBtn");
+const markReviewBtn = document.getElementById("markReviewBtn");
 const backToChatBtn = document.getElementById("backToChatBtn");
 const bottomReviewBtn = document.getElementById("bottomReviewBtn");
+const inExamActions = document.getElementById("inExamActions");
+const preExamActions = document.getElementById("preExamActions");
 const micBtn = document.getElementById("micBtn");
 const aboutTestBtn = document.getElementById("aboutTestBtn");
 const readInstructionsBtn = document.getElementById("readInstructionsBtn");
@@ -38,7 +43,19 @@ const totalQuestionsCount = document.getElementById("totalQuestionsCount");
 const visitedCount = document.getElementById("visitedCount");
 const notVisitedCount = document.getElementById("notVisitedCount");
 const answeredCount = document.getElementById("answeredCount");
+const reviewedCount = document.getElementById("reviewedCount");
 const notAnsweredCount = document.getElementById("notAnsweredCount");
+const examModalOverlay = document.getElementById("examModalOverlay");
+const aboutTestModal = document.getElementById("aboutTestModal");
+const instructionsModal = document.getElementById("instructionsModal");
+const submitConfirmModal = document.getElementById("submitConfirmModal");
+const exitConfirmModal = document.getElementById("exitConfirmModal");
+const modalConfirmSubmitBtn = document.getElementById("modalConfirmSubmitBtn");
+const modalConfirmExitBtn = document.getElementById("modalConfirmExitBtn");
+const modalTotalCount = document.getElementById("modalTotalCount");
+const modalAnsweredCount = document.getElementById("modalAnsweredCount");
+const modalUnansweredCount = document.getElementById("modalUnansweredCount");
+const modalReviewedCount = document.getElementById("modalReviewedCount");
 
 // Provided FAQ and policy documents. The bot answers only from this list.
 const documents = [
@@ -281,6 +298,8 @@ let selectedExamAnswer = "";
 let examAnswers = [];
 let visitedQuestions = [];
 let skippedQuestions = [];
+let reviewedQuestions = [];
+let examTimeTakenSeconds = 0;
 let timerSeconds = 20 * 60;
 let timerInterval = null;
 let reviewMode = false;
@@ -351,6 +370,7 @@ function renderTasks() {
   openCount.textContent = tasks.filter((task) => task.status === "open").length;
   doneCount.textContent = tasks.filter((task) => task.status === "done").length;
   progressCount.textContent = `${getAverageProgress()}%`;
+  updateHomeMetrics();
 
   if (tasks.length === 0) {
     const emptyItem = document.createElement("li");
@@ -865,14 +885,62 @@ function handleQuizAnswer(userText) {
   return { text: resultText };
 }
 
+function updateHomeMetrics() {
+  const open = tasks.filter((task) => task.status === "open").length;
+  const done = tasks.filter((task) => task.status === "done").length;
+  const progress = getAverageProgress();
+
+  const homeOpen = document.getElementById("homeOpenTasksCount");
+  const homeDone = document.getElementById("homeDoneTasksCount");
+  const homeProgress = document.getElementById("homeProgressPercent");
+  const homeStatus = document.getElementById("homeAssessmentStatus");
+
+  if (homeOpen) homeOpen.textContent = open;
+  if (homeDone) homeDone.textContent = done;
+  if (homeProgress) homeProgress.textContent = `${progress}%`;
+
+  if (homeStatus) {
+    const attempts = loadAttemptHistory();
+    if (attempts && attempts.length > 0) {
+      homeStatus.textContent = `${attempts[0].percentage} (${attempts[0].status})`;
+      homeStatus.className = attempts[0].status === "Needs Retest" ? "status-pill warn" : "status-pill success";
+    } else {
+      homeStatus.textContent = "Not Started";
+      homeStatus.className = "status-pill neutral";
+    }
+  }
+}
+
 function showMenu(menuName) {
+  // Track where we came from before going to exam (for back-arrow navigation)
+  if (menuName === "exam") {
+    const currentActive = homeMenu && homeMenu.classList.contains("active") ? "home"
+      : chatMenu.classList.contains("active") ? "chat" : "home";
+    window._examPreviousMenu = currentActive;
+  }
+
+  const adminMenuEl = document.getElementById("adminMenu");
+
+  if (homeMenu) homeMenu.classList.toggle("active", menuName === "home");
   chatMenu.classList.toggle("active", menuName === "chat");
   examMenu.classList.toggle("active", menuName === "exam");
-  pageHero.style.display = menuName === "exam" ? "none" : "";
+  if (adminMenuEl) {
+    if (menuName === "admin") {
+      adminMenuEl.style.display = "block";
+    } else {
+      adminMenuEl.style.display = "none";
+    }
+  }
+
+  pageHero.style.display = (menuName === "exam" || menuName === "admin") ? "none" : "";
   menuTabs.style.display = menuName === "exam" ? "none" : "";
 
   if (menuName === "exam") {
     initializeExamScreen();
+  }
+
+  if (menuName === "home") {
+    updateHomeMetrics();
   }
 
   menuButtons.forEach((button) => {
@@ -880,15 +948,62 @@ function showMenu(menuName) {
   });
 }
 
+function loadAttemptHistory() {
+  try {
+    const saved = localStorage.getItem("hr_exam_attempt_history");
+    return saved ? JSON.parse(saved) : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+function saveAttemptRecord(record) {
+  try {
+    const history = loadAttemptHistory();
+    history.unshift(record);
+    localStorage.setItem("hr_exam_attempt_history", JSON.stringify(history.slice(0, 5)));
+  } catch (e) {}
+}
+
+function openExamModal(modalId) {
+  if (!examModalOverlay) return;
+  examModalOverlay.style.display = "flex";
+  [aboutTestModal, instructionsModal, submitConfirmModal, exitConfirmModal].forEach((m) => {
+    if (m) m.style.display = m.id === modalId ? "block" : "none";
+  });
+}
+
+function closeExamModals() {
+  if (!examModalOverlay) return;
+  examModalOverlay.style.display = "none";
+  [aboutTestModal, instructionsModal, submitConfirmModal, exitConfirmModal].forEach((m) => {
+    if (m) m.style.display = "none";
+  });
+}
+
 function updateExamLayoutVisibility() {
   const examLayout = document.querySelector(".exam-layout");
-  if (examLayout) {
-    if (examStarted) {
-      examLayout.classList.remove("not-started");
-      startExamBtn.style.display = "none";
+  if (!examLayout) return;
+
+  if (examStarted) {
+    examLayout.classList.remove("not-started");
+    if (inExamActions) inExamActions.style.display = "flex";
+    if (preExamActions) preExamActions.style.display = "none";
+    if (startExamBtn) startExamBtn.style.display = "none";
+  } else {
+    examLayout.classList.add("not-started");
+    if (inExamActions) inExamActions.style.display = "none";
+    if (examStatus.textContent === "Completed") {
+      // AFTER COMPLETION: HIDE BOTH IN-EXAM AND PRE-EXAM BUTTONS!
+      // No Save and Next, no Review, no Clear Response!
+      if (preExamActions) preExamActions.style.display = "none";
     } else {
-      examLayout.classList.add("not-started");
-      startExamBtn.style.display = "inline-block";
+      // Instructions screen before start
+      if (preExamActions) preExamActions.style.display = "flex";
+      if (startExamBtn) {
+        startExamBtn.style.display = "inline-block";
+        startExamBtn.disabled = !instructionsAccepted;
+      }
     }
   }
 }
@@ -909,9 +1024,7 @@ function initializeExamScreen() {
 
 function startExam() {
   if (examStatus.textContent === "Completed") {
-    instructionsAccepted = false;
-    renderInstructionsScreen();
-    updateExamLayoutVisibility();
+    restartExam();
     return;
   }
 
@@ -920,6 +1033,10 @@ function startExam() {
     return;
   }
 
+  restartExam();
+}
+
+function restartExam() {
   quizActive = false;
   currentQuestionIndex = 0;
   correctAnswers = 0;
@@ -927,20 +1044,24 @@ function startExam() {
   examAnswers = [];
   visitedQuestions = [];
   skippedQuestions = [];
+  reviewedQuestions = [];
   reviewMode = false;
   examStarted = true;
+  instructionsAccepted = true;
   timerSeconds = 20 * 60;
+  examTimeTakenSeconds = 0;
+
   examStatus.textContent = "Exam running";
   examStatus.classList.add("quiz-active");
-  quizBadge.textContent = "Ready";
-  quizBadge.classList.remove("quiz-active");
+  quizBadge.textContent = "In Exam";
+  quizBadge.classList.add("quiz-active");
   examResult.textContent = "";
-  nextQuestionBtn.disabled = false;
-  submitAnswerBtn.disabled = true;
-  submitAnswerBtn.textContent = "Review and Submit";
-  clearAnswerBtn.disabled = true;
-  startExamBtn.disabled = true;
-  startExamBtn.textContent = "Start Exam";
+
+  if (submitAnswerBtn) {
+    submitAnswerBtn.disabled = false;
+    submitAnswerBtn.textContent = "Review & Submit";
+  }
+
   startExamTimer();
   updateExamLayoutVisibility();
   renderExamQuestion();
@@ -952,7 +1073,7 @@ function renderInstructionsScreen() {
   examCounter.textContent = "Before you start";
   examScore.textContent = `Total Questions: ${quizQuestions.length}`;
   examProgressFill.style.width = "0%";
-  examQuestion.textContent = "Read Instructions";
+  examQuestion.textContent = "Onboarding Policy Assessment";
   examOptions.className = "exam-review";
   examOptions.innerHTML = `
     <div class="review-item">
@@ -962,13 +1083,12 @@ function renderInstructionsScreen() {
       </div>
       <div id="instructionContent" style="min-height: 140px;">
         <strong>Exam Instructions</strong>
-        <div>- Total time: 20:00 minutes.</div>
-        <div>- Timer counts down from 20:00 to 00:00 with seconds.</div>
-        <div>- Select one answer for each question.</div>
-        <div>- Click Save and Next to move to the next question.</div>
-        <div>- Answered questions turn green in the left question panel.</div>
-        <div>- Skipped questions turn red in the left question panel.</div>
-        <div>- After the last question, review your answers before final submission.</div>
+        <div>- Total time: 20:00 minutes countdown.</div>
+        <div>- Total questions: ${quizQuestions.length} multiple-choice questions.</div>
+        <div>- Single choice: Select the best option for each question.</div>
+        <div>- Use <strong>Previous</strong> and <strong>Save and Next</strong> or the Question Palette on the left.</div>
+        <div>- Answered questions turn <strong>green</strong>; skipped turn <strong>red</strong>; marked for review turn <strong>purple</strong>.</div>
+        <div>- Click <strong>Review &amp; Submit</strong> at any time to submit your test.</div>
       </div>
       <label class="instruction-check">
         <input id="acceptInstructionsCheck" type="checkbox">
@@ -977,17 +1097,13 @@ function renderInstructionsScreen() {
     </div>
   `;
   examResult.textContent = "";
-  nextQuestionBtn.disabled = true;
-  clearAnswerBtn.disabled = true;
-  submitAnswerBtn.disabled = true;
-  submitAnswerBtn.textContent = "Review and Submit";
-  startExamBtn.disabled = !instructionsAccepted;
+  if (submitAnswerBtn) submitAnswerBtn.disabled = true;
 
   const checkbox = document.getElementById("acceptInstructionsCheck");
   checkbox.checked = instructionsAccepted;
   checkbox.addEventListener("change", () => {
     instructionsAccepted = checkbox.checked;
-    startExamBtn.disabled = !instructionsAccepted;
+    if (startExamBtn) startExamBtn.disabled = !instructionsAccepted;
   });
 
   const preInstructionsBtn = document.getElementById("preInstructionsBtn");
@@ -999,13 +1115,12 @@ function renderInstructionsScreen() {
     preAboutBtn.classList.remove("active");
     instructionContent.innerHTML = `
       <strong>Exam Instructions</strong>
-      <div>- Total time: 20:00 minutes.</div>
-      <div>- Timer counts down from 20:00 to 00:00 with seconds.</div>
-      <div>- Select one answer for each question.</div>
-      <div>- Click Save and Next to move to the next question.</div>
-      <div>- Answered questions turn green in the left question panel.</div>
-      <div>- Skipped questions turn red in the left question panel.</div>
-      <div>- After the last question, review your answers before final submission.</div>
+      <div>- Total time: 20:00 minutes countdown.</div>
+      <div>- Total questions: ${quizQuestions.length} multiple-choice questions.</div>
+      <div>- Single choice: Select the best option for each question.</div>
+      <div>- Use <strong>Previous</strong> and <strong>Save and Next</strong> or the Question Palette on the left.</div>
+      <div>- Answered questions turn <strong>green</strong>; skipped turn <strong>red</strong>; marked for review turn <strong>purple</strong>.</div>
+      <div>- Click <strong>Review &amp; Submit</strong> at any time to submit your test.</div>
     `;
   });
 
@@ -1014,13 +1129,15 @@ function renderInstructionsScreen() {
     preInstructionsBtn.classList.remove("active");
     instructionContent.innerHTML = `
       <strong>Onboarding Policy Assessment</strong>
-      <div>- Purpose: check employee understanding of onboarding rules.</div>
-      <div>- Total questions: ${quizQuestions.length}</div>
+      <div>- Purpose: Verify employee understanding of official company policies and guidelines.</div>
+      <div>- Total questions: ${quizQuestions.length} questions.</div>
       <div>- Duration: 20 minutes.</div>
-      <div>- Topics: benefits, IT setup, leaves, timings, holidays, policies, navigation, and task awareness.</div>
-      <div>- Result: score and percentage with suggestions.</div>
+      <div>- Topics: Office &amp; shift timings, leaves, IT setup, cafeteria, navigation, uniform, and code of conduct.</div>
+      <div>- Result: Detailed score, percentage, evaluation badge, and personalized suggestions.</div>
     `;
   });
+
+  updateExamLayoutVisibility();
 }
 
 function renderExamQuestion() {
@@ -1035,11 +1152,28 @@ function renderExamQuestion() {
   examQuestion.textContent = question.question;
   examOptions.innerHTML = "";
   examOptions.className = "exam-options";
-  nextQuestionBtn.disabled = false;
-  submitAnswerBtn.disabled = true;
-  submitAnswerBtn.textContent = "Review and Submit";
+
   selectedExamAnswer = examAnswers[currentQuestionIndex] || "";
-  clearAnswerBtn.disabled = !selectedExamAnswer;
+
+  // Update navigation button states
+  if (prevQuestionBtn) {
+    prevQuestionBtn.disabled = currentQuestionIndex === 0;
+  }
+  if (nextQuestionBtn) {
+    nextQuestionBtn.disabled = false;
+    nextQuestionBtn.textContent = currentQuestionIndex === quizQuestions.length - 1 ? "Save & Review →" : "Save and Next →";
+  }
+  if (clearAnswerBtn) {
+    clearAnswerBtn.disabled = !selectedExamAnswer;
+  }
+  if (markReviewBtn) {
+    const isMarked = Boolean(reviewedQuestions[currentQuestionIndex]);
+    markReviewBtn.classList.toggle("active", isMarked);
+    markReviewBtn.textContent = isMarked ? "✓ Marked for Review" : "Mark for Review";
+  }
+  if (submitAnswerBtn) {
+    submitAnswerBtn.disabled = false;
+  }
 
   getOptionList(question.options).forEach((option) => {
     const button = document.createElement("button");
@@ -1049,9 +1183,6 @@ function renderExamQuestion() {
     button.textContent = option.text;
     if (selectedExamAnswer === option.value) {
       button.classList.add("selected");
-      nextQuestionBtn.disabled = false;
-      submitAnswerBtn.disabled = true;
-      clearAnswerBtn.disabled = false;
     }
     button.addEventListener("click", () => {
       selectedExamAnswer = option.value;
@@ -1061,151 +1192,139 @@ function renderExamQuestion() {
         item.classList.remove("selected");
       });
       button.classList.add("selected");
-      nextQuestionBtn.disabled = false;
-      submitAnswerBtn.disabled = true;
-      clearAnswerBtn.disabled = false;
+      if (clearAnswerBtn) clearAnswerBtn.disabled = false;
       renderQuestionPalette();
       updateExamOverview();
     });
     examOptions.appendChild(button);
   });
 
-  if (currentQuestionIndex === quizQuestions.length - 1) {
-    bottomReviewBtn.style.display = "inline-block";
-  } else {
-    bottomReviewBtn.style.display = "none";
-  }
-
   renderQuestionPalette();
   updateExamOverview();
 }
 
-function getOptionList(optionsText) {
-  return [
-    { value: "a", text: optionsText.split("  B.")[0].trim() },
-    { value: "b", text: "B. " + optionsText.split("  B.")[1].split("  C.")[0].trim() },
-    { value: "c", text: "C. " + optionsText.split("  C.")[1].trim() }
-  ];
+function selectOptionByValue(val) {
+  if (!examStarted) return;
+  const targetOption = document.querySelector(`.exam-option[data-answer="${val}"]`);
+  if (targetOption) {
+    targetOption.click();
+  }
 }
 
-function submitExamAnswer() {
-  if (reviewMode) {
-    submitFinalExam();
-    return;
+function goToPrevQuestion() {
+  if (!examStarted) return;
+  if (currentQuestionIndex > 0) {
+    currentQuestionIndex -= 1;
+    renderExamQuestion();
   }
-
-  showReviewScreen();
 }
 
 function goToNextQuestion() {
+  if (!examStarted) return;
   if (!selectedExamAnswer) {
     skippedQuestions[currentQuestionIndex] = true;
   }
 
-  currentQuestionIndex += 1;
-
-  if (currentQuestionIndex >= quizQuestions.length) {
-    currentQuestionIndex = 0;
+  if (currentQuestionIndex < quizQuestions.length - 1) {
+    currentQuestionIndex += 1;
+    renderExamQuestion();
+  } else {
+    // If on last question, open review/submission modal
+    openSubmitConfirmModal();
   }
-
-  examResult.textContent = "";
-  renderExamQuestion();
 }
 
-function getConciseReviewHtml() {
-  const answeredNums = [];
-  const unansweredNums = [];
-  
-  quizQuestions.forEach((q, index) => {
-    if (examAnswers[index]) {
-      answeredNums.push(index + 1);
-    } else {
-      unansweredNums.push(index + 1);
-    }
-  });
-
-  return `
-    <div class="review-summary-card" style="padding: 24px; border: 1px solid #dbe5ed; border-radius: 8px; max-width: 600px; margin: 20px auto; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05); text-align: left;">
-      <h3 style="margin-top: 0; margin-bottom: 18px; font-size: 20px; text-align: center;">Exam Submission Summary</h3>
-      
-      <div style="margin-bottom: 14px; font-size: 15px; border-bottom: 1px solid #edf2f7; padding-bottom: 8px;">
-        <strong>Total Questions:</strong> <span style="font-weight: bold; font-size: 16px;">${quizQuestions.length}</span>
-      </div>
-      <div style="margin-bottom: 14px; font-size: 15px; border-bottom: 1px solid #edf2f7; padding-bottom: 8px;">
-        <strong>Answered Questions (${answeredNums.length}):</strong> 
-        <span style="color: #166534; font-weight: bold; word-break: break-all;">${answeredNums.length > 0 ? answeredNums.join(", ") : "None"}</span>
-      </div>
-      <div style="margin-bottom: 24px; font-size: 15px; border-bottom: 1px solid #edf2f7; padding-bottom: 8px;">
-        <strong>Unanswered Questions (${unansweredNums.length}):</strong> 
-        <span style="color: #991b1b; font-weight: bold; word-break: break-all;">${unansweredNums.length > 0 ? unansweredNums.join(", ") : "None"}</span>
-      </div>
-
-      <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
-        <button id="finalSubmitBtn" type="button" class="score-home-btn" style="background: #0f2f75; padding: 12px 24px;">Submit Exam</button>
-        <button id="backToQuestionsBtn" type="button" class="clear-response-btn" style="padding: 12px 24px; border: 1px solid #cbd5df; border-radius: 6px; font-weight: bold; cursor: pointer;">Back to Questions</button>
-      </div>
-    </div>
-  `;
-}
-
-function showReviewScreen() {
-  reviewMode = true;
-  examStatus.textContent = "Review";
-  examCounter.textContent = `Review ${quizQuestions.length} questions`;
-  examScore.textContent = `Answered: ${getAnsweredCount()}`;
-  examProgressFill.style.width = "100%";
-  examQuestion.textContent = "Review your answers before final submission";
-  examOptions.className = "exam-review";
-  examOptions.innerHTML = getConciseReviewHtml();
-
-  const finalSubmitBtn = document.getElementById("finalSubmitBtn");
-  if (finalSubmitBtn) {
-    finalSubmitBtn.addEventListener("click", () => {
-      submitFinalExam();
-    });
+function toggleMarkForReview() {
+  if (!examStarted) return;
+  reviewedQuestions[currentQuestionIndex] = !reviewedQuestions[currentQuestionIndex];
+  if (markReviewBtn) {
+    const isMarked = Boolean(reviewedQuestions[currentQuestionIndex]);
+    markReviewBtn.classList.toggle("active", isMarked);
+    markReviewBtn.textContent = isMarked ? "✓ Marked for Review" : "Mark for Review";
   }
-
-  const backToQuestionsBtn = document.getElementById("backToQuestionsBtn");
-  if (backToQuestionsBtn) {
-    backToQuestionsBtn.addEventListener("click", () => {
-      renderExamQuestion();
-    });
-  }
-
-  examResult.textContent = "";
-  nextQuestionBtn.disabled = true;
-  clearAnswerBtn.disabled = true;
-  submitAnswerBtn.disabled = false;
-  submitAnswerBtn.textContent = "Submit Exam";
   renderQuestionPalette();
   updateExamOverview();
 }
 
+function clearCurrentAnswer() {
+  if (!examStarted) return;
+  examAnswers[currentQuestionIndex] = "";
+  selectedExamAnswer = "";
+  skippedQuestions[currentQuestionIndex] = false;
+  examResult.textContent = "";
+  renderExamQuestion();
+}
+
+function openSubmitConfirmModal() {
+  const answered = getAnsweredCount();
+  const unanswered = quizQuestions.length - answered;
+  const reviewed = getReviewedCount();
+
+  if (modalTotalCount) modalTotalCount.textContent = quizQuestions.length;
+  if (modalAnsweredCount) modalAnsweredCount.textContent = answered;
+  if (modalUnansweredCount) modalUnansweredCount.textContent = unanswered;
+  if (modalReviewedCount) modalReviewedCount.textContent = reviewed;
+
+  openExamModal("submitConfirmModal");
+}
+
 function submitFinalExam() {
+  closeExamModals();
   stopExamTimer();
+
+  const totalQuestions = quizQuestions.length;
   correctAnswers = quizQuestions.filter((question, index) => {
     return examAnswers[index] === question.answer;
   }).length;
 
-  const percentage = Math.round((correctAnswers / quizQuestions.length) * 100);
-  const finalMessage =
-    `Exam submitted.\n` +
-    `Your score: ${correctAnswers}/${quizQuestions.length}\n` +
-    `Total percentage: ${percentage}/100\n` +
-    getExamResultMessage(percentage);
+  const answered = getAnsweredCount();
+  const incorrectAnswers = quizQuestions.filter((question, index) => {
+    return examAnswers[index] && examAnswers[index] !== question.answer;
+  }).length;
+  const skippedCount = totalQuestions - answered;
+  const percentage = Math.round((correctAnswers / totalQuestions) * 100);
+  const accuracyRate = answered > 0 ? Math.round((correctAnswers / answered) * 100) : 0;
+  const timeSpent = (20 * 60) - timerSeconds;
 
   examStarted = false;
   examStatus.textContent = "Completed";
   examStatus.classList.remove("quiz-active");
-  examCounter.textContent = "Score Page";
-  examScore.textContent = `Score: ${correctAnswers}/${quizQuestions.length}`;
+  quizBadge.textContent = "Completed";
+  quizBadge.classList.remove("quiz-active");
+  examCounter.textContent = "Assessment Score";
+  examScore.textContent = `Score: ${correctAnswers}/${totalQuestions}`;
   examProgressFill.style.width = `${percentage}%`;
-  examQuestion.textContent = "Exam Score";
-  
+  examQuestion.textContent = "Assessment Score Card";
+  examResult.textContent = "";
+
+  // Hide in-exam buttons & pre-exam buttons (NO Save and Next, NO Review, NO Clear Response)
   updateExamLayoutVisibility();
 
+  if (submitAnswerBtn) {
+    submitAnswerBtn.disabled = true;
+    submitAnswerBtn.textContent = "Review & Submit";
+  }
+
+  // Save attempt record to localStorage
+  saveAttemptRecord({
+    date: new Date().toLocaleDateString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }),
+    score: `${correctAnswers}/${totalQuestions}`,
+    percentage: `${percentage}%`,
+    status: percentage >= 80 ? "Distinction" : (percentage >= 60 ? "Passed" : "Needs Retest"),
+    timeTaken: formatDuration(timeSpent)
+  });
+
+  // Render ONLY the Score Dashboard (NO questions and answers!)
   examOptions.className = "exam-review";
-  examOptions.innerHTML = getScorePageHtml(correctAnswers, percentage);
+  examOptions.innerHTML = getScorePageHtml(correctAnswers, totalQuestions, percentage, incorrectAnswers, skippedCount, accuracyRate, timeSpent);
+
+  // Attach score card action button handlers
+  const scoreRetakeBtn = document.getElementById("scoreRetakeBtn");
+  if (scoreRetakeBtn) {
+    scoreRetakeBtn.addEventListener("click", () => {
+      restartExam();
+    });
+  }
 
   const scoreHomeBtn = document.getElementById("scoreHomeBtn");
   if (scoreHomeBtn) {
@@ -1215,33 +1334,91 @@ function submitFinalExam() {
     });
   }
 
-  submitAnswerBtn.textContent = "Review and Submit";
-  submitAnswerBtn.disabled = true;
-  nextQuestionBtn.disabled = true;
-  clearAnswerBtn.disabled = true;
-  startExamBtn.disabled = false;
-  startExamBtn.textContent = "Restart Exam";
-  reviewMode = false;
-  examResult.textContent = finalMessage;
+  const scorePrintBtn = document.getElementById("scorePrintBtn");
+  if (scorePrintBtn) {
+    scorePrintBtn.addEventListener("click", () => {
+      window.print();
+    });
+  }
 }
 
-function getScorePageHtml(score, percentage) {
+function formatDuration(seconds) {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")} min`;
+}
+
+function getScorePageHtml(score, total, percentage, incorrect, skipped, accuracy, timeSpentSeconds) {
+  let badgeClass = "retest";
+  let badgeText = "⚠️ Needs Retest (Under 60%)";
+  if (percentage >= 80) {
+    badgeClass = "distinction";
+    badgeText = "★ Passed with Distinction";
+  } else if (percentage >= 60) {
+    badgeClass = "passed";
+    badgeText = "✓ Assessment Passed";
+  }
+
+  const timeFormatted = formatDuration(timeSpentSeconds);
+  const attempts = loadAttemptHistory();
+
+  const attemptsHtml = attempts.length > 1 ? `
+    <div class="attempt-history-box">
+      <h4>Recent Attempt History</h4>
+      ${attempts.slice(1, 4).map((att, i) => `
+        <div class="attempt-item">
+          <span>Attempt ${attempts.length - i - 1} (${att.date})</span>
+          <span><strong>${att.score} (${att.percentage})</strong> — ${att.status}</span>
+        </div>
+      `).join("")}
+    </div>
+  ` : "";
+
   return `
-    <div class="score-card">
-      <div class="score-percent">${percentage}%</div>
-      <strong>Your score: ${score}/${quizQuestions.length}</strong>
-      <p>${getExamResultMessage(percentage)}</p>
-      <div class="score-suggestions">
-        <strong>Suggestions:</strong>
+    <div class="score-dashboard-card">
+      <div class="score-badge ${badgeClass}">${badgeText}</div>
+      <div class="score-big-percentage">${percentage}%</div>
+      <div class="score-subtitle">You scored <strong>${score} out of ${total}</strong> questions correctly</div>
+
+      <div class="score-metrics-grid">
+        <div class="metric-tile correct">
+          <div class="metric-lbl">Correct Answers</div>
+          <div class="metric-val">✓ ${score}</div>
+        </div>
+        <div class="metric-tile incorrect">
+          <div class="metric-lbl">Incorrect Answers</div>
+          <div class="metric-val">✕ ${incorrect}</div>
+        </div>
+        <div class="metric-tile">
+          <div class="metric-lbl">Skipped / Left</div>
+          <div class="metric-val">⏱ ${skipped}</div>
+        </div>
+        <div class="metric-tile">
+          <div class="metric-lbl">Total Questions</div>
+          <div class="metric-val">📋 ${total}</div>
+        </div>
+        <div class="metric-tile">
+          <div class="metric-lbl">Accuracy Rate</div>
+          <div class="metric-val">🎯 ${accuracy}%</div>
+        </div>
+        <div class="metric-tile time">
+          <div class="metric-lbl">Time Taken</div>
+          <div class="metric-val">⏳ ${timeFormatted}</div>
+        </div>
+      </div>
+
+      <div class="score-feedback-box">
+        <strong>HR Policy Evaluation &amp; Feedback:</strong>
         ${getScoreSuggestions(percentage)}
       </div>
-      <button id="scoreHomeBtn" type="button" class="score-home-btn">Back to Main Page</button>
-    </div>
-    <div class="score-details-heading" style="margin-top: 30px; font-weight: bold; font-size: 18px;">
-      Detailed Question Review
-    </div>
-    <div class="exam-review" style="margin-top: 12px;">
-      ${getExamReviewHtml(true)}
+
+      ${attemptsHtml}
+
+      <div class="score-actions-group">
+        <button id="scoreRetakeBtn" type="button" class="btn-score-action primary">↻ Retake Assessment</button>
+        <button id="scoreHomeBtn" type="button" class="btn-score-action secondary">← Back to Dashboard</button>
+        <button id="scorePrintBtn" type="button" class="btn-score-action outline">🖨 Print Score Card</button>
+      </div>
     </div>
   `;
 }
@@ -1249,117 +1426,58 @@ function getScorePageHtml(score, percentage) {
 function getScoreSuggestions(percentage) {
   if (percentage >= 80) {
     return `
-      <div>- Excellent understanding of onboarding policies.</div>
-      <div>- You can proceed with onboarding tasks confidently.</div>
-      <div>- Review IT setup and leave application once before joining.</div>
+      <div>- Excellent understanding of workplace policies, shift timings, and compliance rules.</div>
+      <div>- You are well prepared to complete your self-service onboarding milestones.</div>
+      <div>- Proceed to the 30-Day roadmap checkpoints with confidence.</div>
     `;
   }
 
   if (percentage >= 50) {
     return `
-      <div>- Good attempt, but review missed policy areas.</div>
-      <div>- Focus on timings, leave rules, IT setup, and workplace navigation.</div>
-      <div>- Ask the assistant topic-wise questions before retaking the exam.</div>
+      <div>- Satisfactory attempt, but review missed policy areas before completing roadmaps.</div>
+      <div>- Focus on shift timings, leave applications (at least 2 days in advance), and IT security policies.</div>
+      <div>- You can consult the AI Assistant for quick policy clarifications anytime.</div>
     `;
   }
 
   return `
     <div>- Please review the onboarding documents carefully.</div>
-    <div>- Start with leave types, office timings, shift timings, and IT setup.</div>
-    <div>- Ask the assistant simple questions and retake the exam after practice.</div>
+    <div>- Pay special attention to office timings (6 AM - 9 PM), annual leave allotments (18 paid leaves), and data security.</div>
+    <div>- Ask the assistant questions on any policy area and retake the assessment when ready.</div>
   `;
 }
 
 function showAboutTest() {
-  examQuestion.textContent = "About Test";
-  examOptions.className = "exam-review";
-  
-  let backBtnHtml = "";
-  if (examStarted) {
-    backBtnHtml = `<button id="backToExamBtn" type="button" style="margin-top: 15px; background: #0f766e;">Back to Exam</button>`;
-  }
-
-  examOptions.innerHTML = `
-    <div class="review-item">
-      <strong>Onboarding Policy Assessment</strong>
-      <div>- Purpose: check employee understanding of onboarding rules.</div>
-      <div>- Total questions: ${quizQuestions.length}</div>
-      <div>- Duration: 20 minutes.</div>
-      <div>- Topics: benefits, IT setup, leaves, timings, holidays, policies, navigation, and task awareness.</div>
-      <div>- Result: score and percentage with suggestions.</div>
-      ${backBtnHtml}
-    </div>
-  `;
-  examResult.textContent = examStarted ? "Click Back to Exam or a question number on the left side to continue the exam." : "";
-  
-  if (examStarted) {
-    nextQuestionBtn.disabled = true;
-    clearAnswerBtn.disabled = true;
-    const backBtn = document.getElementById("backToExamBtn");
-    if (backBtn) {
-      backBtn.addEventListener("click", () => {
-        renderExamQuestion();
-      });
-    }
-  }
+  openExamModal("aboutTestModal");
 }
 
 function showInstructionsFromButton() {
-  if (!examStarted) {
-    renderInstructionsScreen();
-    return;
-  }
-
-  examQuestion.textContent = "Read Instructions";
-  examOptions.className = "exam-review";
-  examOptions.innerHTML = `
-    <div class="review-item">
-      <strong>Exam Instructions</strong>
-      <div>- Total time: 20:00 minutes.</div>
-      <div>- Select one answer for each question.</div>
-      <div>- Click Save and Next to continue.</div>
-      <div>- Green question number means answered.</div>
-      <div>- Red question number means skipped.</div>
-      <div>- Click any question number on the left to return to the exam.</div>
-      <button id="backToExamBtn" type="button" style="margin-top: 15px; background: #0f766e;">Back to Exam</button>
-    </div>
-  `;
-  examResult.textContent = "Click a question number on the left side or click Back to Exam to continue.";
-  nextQuestionBtn.disabled = true;
-  clearAnswerBtn.disabled = true;
-
-  const backBtn = document.getElementById("backToExamBtn");
-  if (backBtn) {
-    backBtn.addEventListener("click", () => {
-      renderExamQuestion();
-    });
-  }
-}
-
-function clearCurrentAnswer() {
-  examAnswers[currentQuestionIndex] = "";
-  selectedExamAnswer = "";
-  skippedQuestions[currentQuestionIndex] = false;
-  examResult.textContent = "";
-  renderExamQuestion();
+  openExamModal("instructionsModal");
 }
 
 function getAnsweredCount() {
   return examAnswers.filter((answer) => Boolean(answer)).length;
 }
 
+function getReviewedCount() {
+  return reviewedQuestions.filter(Boolean).length;
+}
+
 function updateExamOverview() {
   const answered = getAnsweredCount();
-  const visited = visitedQuestions.filter((item) => Boolean(item)).length;
+  const visited = visitedQuestions.filter(Boolean).length;
+  const reviewed = getReviewedCount();
 
-  totalQuestionsCount.textContent = quizQuestions.length;
-  visitedCount.textContent = visited;
-  notVisitedCount.textContent = quizQuestions.length - visited;
-  answeredCount.textContent = answered;
-  notAnsweredCount.textContent = quizQuestions.length - answered;
+  if (totalQuestionsCount) totalQuestionsCount.textContent = quizQuestions.length;
+  if (visitedCount) visitedCount.textContent = visited;
+  if (notVisitedCount) notVisitedCount.textContent = quizQuestions.length - visited;
+  if (answeredCount) answeredCount.textContent = answered;
+  if (reviewedCount) reviewedCount.textContent = reviewed;
+  if (notAnsweredCount) notAnsweredCount.textContent = quizQuestions.length - answered;
 }
 
 function renderQuestionPalette() {
+  if (!questionPalette) return;
   questionPalette.innerHTML = "";
 
   quizQuestions.forEach((question, index) => {
@@ -1372,7 +1490,9 @@ function renderQuestionPalette() {
       button.classList.add("current");
     }
 
-    if (examAnswers[index]) {
+    if (reviewedQuestions[index]) {
+      button.classList.add("reviewed");
+    } else if (examAnswers[index]) {
       button.classList.add("answered");
     } else if (skippedQuestions[index]) {
       button.classList.add("skipped");
@@ -1414,37 +1534,24 @@ function stopExamTimer() {
 }
 
 function updateTimerDisplay() {
+  if (!examTimer) return;
   const minutes = Math.floor(timerSeconds / 60);
   const seconds = timerSeconds % 60;
   examTimer.textContent = `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+
+  if (timerSeconds <= 120 && examStarted) {
+    examTimer.classList.add("timer-warning");
+  } else {
+    examTimer.classList.remove("timer-warning");
+  }
 }
 
-function getExamReviewHtml(showCorrect) {
-  return quizQuestions
-    .map((question, index) => {
-      const userAnswer = examAnswers[index];
-      const isCorrect = userAnswer === question.answer;
-      const className = showCorrect ? (isCorrect ? "correct" : "wrong") : "";
-      const statusText = userAnswer ? "Answered" : "Skipped";
-      const correctLine = showCorrect
-        ? `<div>Correct answer: ${getAnswerText(question, question.answer)}</div>`
-        : "";
-
-      return `
-        <div class="review-item ${className}">
-          <strong>${index + 1}. ${question.question}</strong>
-          <div>Status: ${statusText}</div>
-          <div>Your answer: ${getAnswerText(question, userAnswer)}</div>
-          ${correctLine}
-        </div>
-      `;
-    })
-    .join("");
-}
-
-function getAnswerText(question, answerValue) {
-  const option = getOptionList(question.options).find((item) => item.value === answerValue);
-  return option ? option.text : "Not answered";
+function getOptionList(optionsText) {
+  return [
+    { value: "a", text: optionsText.split("  B.")[0].trim() },
+    { value: "b", text: "B. " + optionsText.split("  B.")[1].split("  C.")[0].trim() },
+    { value: "c", text: "C. " + optionsText.split("  C.")[1].trim() }
+  ];
 }
 
 function getExamResultMessage(percentage) {
@@ -1785,12 +1892,61 @@ startExamBtn.addEventListener("click", () => {
   startExam();
 });
 
-submitAnswerBtn.addEventListener("click", () => {
-  submitExamAnswer();
-});
+if (submitAnswerBtn) {
+  submitAnswerBtn.addEventListener("click", () => {
+    if (examStarted) openSubmitConfirmModal();
+  });
+}
 
-nextQuestionBtn.addEventListener("click", () => {
-  goToNextQuestion();
+if (bottomReviewBtn) {
+  bottomReviewBtn.addEventListener("click", () => {
+    if (examStarted) openSubmitConfirmModal();
+  });
+}
+
+if (prevQuestionBtn) {
+  prevQuestionBtn.addEventListener("click", () => {
+    goToPrevQuestion();
+  });
+}
+
+if (nextQuestionBtn) {
+  nextQuestionBtn.addEventListener("click", () => {
+    goToNextQuestion();
+  });
+}
+
+if (markReviewBtn) {
+  markReviewBtn.addEventListener("click", () => {
+    toggleMarkForReview();
+  });
+}
+
+if (clearAnswerBtn) {
+  clearAnswerBtn.addEventListener("click", () => {
+    clearCurrentAnswer();
+  });
+}
+
+if (modalConfirmSubmitBtn) {
+  modalConfirmSubmitBtn.addEventListener("click", () => {
+    submitFinalExam();
+  });
+}
+
+if (modalConfirmExitBtn) {
+  modalConfirmExitBtn.addEventListener("click", () => {
+    closeExamModals();
+    stopExamTimer();
+    examStarted = false;
+    showMenu(window._examPreviousMenu || "home");
+  });
+}
+
+document.querySelectorAll("[data-close]").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    closeExamModals();
+  });
 });
 
 clearTasksBtn.addEventListener("click", () => {
@@ -1800,14 +1956,28 @@ clearTasksBtn.addEventListener("click", () => {
   addMessage("bot", "All onboarding tasks have been cleared.");
 });
 
-clearAnswerBtn.addEventListener("click", () => {
-  clearCurrentAnswer();
+backToChatBtn.addEventListener("click", () => {
+  if (examStarted) {
+    openExamModal("exitConfirmModal");
+  } else {
+    stopExamTimer();
+    // Navigate back to where the user came from (home by default)
+    showMenu(window._examPreviousMenu || "home");
+  }
 });
 
-backToChatBtn.addEventListener("click", () => {
-  stopExamTimer();
-  showMenu("chat");
-});
+// Breadcrumb back arrow – same behaviour as the Exit button
+const breadcrumbBackBtn = document.getElementById("breadcrumbBackBtn");
+if (breadcrumbBackBtn) {
+  breadcrumbBackBtn.addEventListener("click", () => {
+    if (examStarted) {
+      openExamModal("exitConfirmModal");
+    } else {
+      stopExamTimer();
+      showMenu(window._examPreviousMenu || "home");
+    }
+  });
+}
 
 aboutTestBtn.addEventListener("click", () => {
   showAboutTest();
@@ -1817,8 +1987,32 @@ readInstructionsBtn.addEventListener("click", () => {
   showInstructionsFromButton();
 });
 
-bottomReviewBtn.addEventListener("click", () => {
-  showReviewScreen();
+// Keyboard Navigation for Exam Experience
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") {
+    closeExamModals();
+    return;
+  }
+
+  if (!examStarted) return;
+  if (document.activeElement && (document.activeElement.tagName === "INPUT" || document.activeElement.tagName === "TEXTAREA")) {
+    return;
+  }
+
+  const key = e.key.toLowerCase();
+  if (key === "1" || key === "a") {
+    selectOptionByValue("a");
+  } else if (key === "2" || key === "b") {
+    selectOptionByValue("b");
+  } else if (key === "3" || key === "c") {
+    selectOptionByValue("c");
+  } else if (e.key === "ArrowLeft") {
+    goToPrevQuestion();
+  } else if (e.key === "ArrowRight" || e.key === "Enter") {
+    goToNextQuestion();
+  } else if (key === "m") {
+    toggleMarkForReview();
+  }
 });
 
 // Speech Recognition (Web Speech API)
@@ -1878,7 +2072,1014 @@ if (SpeechRecognition) {
 
 loadTheme();
 renderTasks();
+updateHomeMetrics();
+showMenu("home");
+
+document.querySelectorAll("[data-goto]").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    showMenu(btn.dataset.goto);
+  });
+});
+
 addMessage(
   "bot",
   "Hi! 👋 Welcome aboard! I'm your HR Onboarding Assistant. I can help you with:\n\n• Answering questions about benefits, IT setup & policies\n• Creating onboarding tasks\n• Checking your task status\n\nHow can I help you today?"
 );
+
+
+// ========================================================
+// FIRST-TIME GUIDED TOUR & MODE EXPLAINER
+// ========================================================
+
+(function initGuidedTour() {
+  const STORAGE_KEY = "hr_guided_tour_completed";
+  const overlay = document.getElementById("tourOverlay");
+  const spotlight = document.getElementById("tourSpotlight");
+  const tooltip = document.getElementById("tourTooltip");
+  const stepLabel = document.getElementById("tourStepLabel");
+  const iconEl = document.getElementById("tourIcon");
+  const titleEl = document.getElementById("tourTitle");
+  const descEl = document.getElementById("tourDesc");
+  const dotsContainer = document.getElementById("tourDots");
+  const prevBtn = document.getElementById("tourPrevBtn");
+  const nextBtn = document.getElementById("tourNextBtn");
+  const skipBtn = document.getElementById("tourSkipBtn");
+
+  if (!overlay || !spotlight || !tooltip) return;
+
+  // Tour Steps: explains every mode by navigating directly to its source!
+  const tourSteps = [
+    {
+      menu: "home",
+      targetSelector: ".home-hero-card",
+      icon: "👋",
+      title: "Welcome to Your Onboarding Hub!",
+      desc: "This is your Home base. Here you get an instant overview of your onboarding progress, open tasks, policy assessment status, and quick-action shortcuts."
+    },
+    {
+      menu: "home",
+      targetSelector: ".home-status-card",
+      icon: "📊",
+      title: "Live Onboarding Tracker",
+      desc: "Track your tasks and completion percentage in real-time. This status widget syncs continuously as you complete checklist items."
+    },
+    {
+      menu: "home",
+      targetSelector: ".home-pathways-grid",
+      icon: "🧭",
+      title: "3 Core Onboarding Pathways",
+      desc: "Quickly access the AI Onboarding Buddy, your interactive Task Tracker, or the Policy Assessment with a single click."
+    },
+    {
+      menu: "home",
+      targetSelector: "#quickReference",
+      icon: "📖",
+      title: "Workplace Quick Reference",
+      desc: "Essential Day-1 answers at your fingertips: shift timings, leave allotments (18 paid leaves), IT credentials, and floor-wise navigation."
+    },
+    {
+      menu: "chat",
+      targetSelector: ".chat-panel",
+      icon: "🤖",
+      title: "AI Chat Assistant Mode",
+      desc: "Ask any onboarding or policy question! The AI answers grounded strictly in official company documents. You can also use voice input via the 🎤 microphone."
+    },
+    {
+      menu: "chat",
+      targetSelector: ".task-panel",
+      icon: "✅",
+      title: "Task Tracker & Daily Updates Mode",
+      desc: "Add personal onboarding tasks, track progress percentages, and log daily work notes. You can also tell the bot 'mark ID proof done' directly in chat!"
+    },
+    {
+      menu: "exam",
+      targetSelector: ".exam-card",
+      icon: "🎓",
+      title: "Policy Assessment Exam Mode",
+      desc: "Complete your required 20-minute onboarding assessment. Answer 30 policy questions, use Mark for Review, and receive an instant score certification with zero answer leaks."
+    },
+    {
+      menu: "home",
+      targetSelector: "#menuTabs",
+      icon: "🚀",
+      title: "You're All Set to Go!",
+      desc: "Switch between Home, Chat & Tasks, and Quiz Exam anytime using these top tabs, or toggle Dark Mode on the right. Welcome to the team!"
+    }
+  ];
+
+  let currentStep = 0;
+
+  function startTour() {
+    overlay.style.display = "block";
+    goToStep(0);
+  }
+
+  // Make startTour available globally
+  window.startTour = startTour;
+
+  // Check if previously completed on initial page load
+  try {
+    if (localStorage.getItem(STORAGE_KEY) === "true") {
+      overlay.style.display = "none";
+    } else {
+      overlay.style.display = "block";
+      goToStep(0);
+    }
+  } catch (e) {
+    overlay.style.display = "block";
+    goToStep(0);
+  }
+
+  // Build Dots
+  if (dotsContainer) {
+    dotsContainer.innerHTML = "";
+    tourSteps.forEach((_, idx) => {
+      const dot = document.createElement("span");
+      dot.className = "tour-dot" + (idx === 0 ? " active" : "");
+      dot.addEventListener("click", () => goToStep(idx));
+      dotsContainer.appendChild(dot);
+    });
+  }
+
+  function updateDots(index) {
+    if (!dotsContainer) return;
+    const dots = dotsContainer.querySelectorAll(".tour-dot");
+    dots.forEach((d, i) => d.classList.toggle("active", i === index));
+  }
+
+  function positionSpotlightAndTooltip(targetEl) {
+    if (!targetEl) {
+      // Fallback: center spotlight in window
+      spotlight.style.top = "20%";
+      spotlight.style.left = "20%";
+      spotlight.style.width = "60%";
+      spotlight.style.height = "50%";
+
+      tooltip.style.top = "50%";
+      tooltip.style.left = "50%";
+      tooltip.style.transform = "translate(-50%, -50%)";
+      return;
+    }
+
+    const rect = targetEl.getBoundingClientRect();
+    const padding = 8;
+    const spotTop = Math.max(0, rect.top - padding);
+    const spotLeft = Math.max(0, rect.left - padding);
+    const spotWidth = rect.width + padding * 2;
+    const spotHeight = rect.height + padding * 2;
+
+    spotlight.style.top = `${spotTop}px`;
+    spotlight.style.left = `${spotLeft}px`;
+    spotlight.style.width = `${spotWidth}px`;
+    spotlight.style.height = `${spotHeight}px`;
+
+    // Tooltip stays locked at the TOP center of screen at all times (CSS handles top: 20px, left: 50%)
+    tooltip.style.top = "20px";
+    tooltip.style.left = "50%";
+    tooltip.style.transform = "translateX(-50%)";
+  }
+
+  function scrollToTargetAndPosition(targetEl) {
+    if (!targetEl) {
+      positionSpotlightAndTooltip(null);
+      return;
+    }
+
+    // Smoothly scroll target into the lower/middle half of viewport so top instruction card never obstructs it
+    targetEl.scrollIntoView({ behavior: "smooth", block: "center", inline: "center" });
+
+    // Update spotlight boundaries as page scrolls
+    setTimeout(() => positionSpotlightAndTooltip(targetEl), 60);
+    setTimeout(() => positionSpotlightAndTooltip(targetEl), 180);
+    setTimeout(() => positionSpotlightAndTooltip(targetEl), 350);
+  }
+
+  function goToStep(index) {
+    if (index < 0 || index >= tourSteps.length) return;
+    currentStep = index;
+    const step = tourSteps[index];
+
+    // 1. Switch to the target mode/menu if needed!
+    if (typeof showMenu === "function") {
+      showMenu(step.menu);
+    }
+
+    // 2. Update step labels & content
+    if (stepLabel) stepLabel.textContent = `Step ${index + 1} of ${tourSteps.length}`;
+    if (iconEl) iconEl.textContent = step.icon;
+    if (titleEl) titleEl.textContent = step.title;
+    if (descEl) descEl.textContent = step.desc;
+
+    // 3. Update nav buttons
+    if (prevBtn) prevBtn.disabled = index === 0;
+    if (nextBtn) {
+      if (index === tourSteps.length - 1) {
+        nextBtn.textContent = "Finish Tour 🎉";
+      } else {
+        nextBtn.textContent = "Next Mode →";
+      }
+    }
+    updateDots(index);
+
+    // 4. Highlight target element
+    setTimeout(() => {
+      const targetEl = document.querySelector(step.targetSelector);
+      scrollToTargetAndPosition(targetEl);
+    }, 140);
+  }
+
+  function closeTour() {
+    overlay.style.display = "none";
+    try {
+      localStorage.setItem(STORAGE_KEY, "true");
+    } catch (e) {}
+    // Return user to Home page when tour ends
+    if (typeof showMenu === "function") {
+      showMenu("home");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  }
+
+  // Keep spotlight and tooltip locked onto element while user manually scrolls or resizes
+  function syncOnUserScroll() {
+    if (overlay.style.display === "block") {
+      const step = tourSteps[currentStep];
+      if (step) {
+        const targetEl = document.querySelector(step.targetSelector);
+        if (targetEl) {
+          positionSpotlightAndTooltip(targetEl);
+        }
+      }
+    }
+  }
+
+  window.addEventListener("scroll", syncOnUserScroll, { passive: true });
+  window.addEventListener("resize", syncOnUserScroll, { passive: true });
+
+  // Event Listeners
+  if (nextBtn) {
+    nextBtn.addEventListener("click", () => {
+      if (currentStep < tourSteps.length - 1) {
+        goToStep(currentStep + 1);
+      } else {
+        closeTour();
+      }
+    });
+  }
+
+  if (prevBtn) {
+    prevBtn.addEventListener("click", () => {
+      if (currentStep > 0) {
+        goToStep(currentStep - 1);
+      }
+    });
+  }
+
+  if (skipBtn) {
+    skipBtn.addEventListener("click", () => {
+      closeTour();
+    });
+  }
+
+  // Keyboard navigation
+  document.addEventListener("keydown", (e) => {
+    if (overlay.style.display !== "block") return;
+    if (e.key === "Escape") {
+      closeTour();
+    } else if (e.key === "ArrowRight") {
+      if (currentStep < tourSteps.length - 1) goToStep(currentStep + 1);
+    } else if (e.key === "ArrowLeft") {
+      if (currentStep > 0) goToStep(currentStep - 1);
+    }
+  });
+
+  // Allow re-triggering the tour from the top navigation button
+  const startTourBtn = document.getElementById("startTourBtn");
+  if (startTourBtn) {
+    startTourBtn.addEventListener("click", () => {
+      startTour();
+    });
+  }
+})();
+
+
+
+// ========================================================
+// AUTHENTICATION SYSTEM (SIGN IN, REGISTER & SESSION)
+// ========================================================
+
+(function initAuthSystem() {
+  const USERS_STORAGE_KEY = "hr_registered_users";
+  const CURRENT_USER_KEY = "hr_current_user";
+
+  // Elements
+  const authModalOverlay = document.getElementById("authModalOverlay");
+  const authModalCloseBtn = document.getElementById("authModalCloseBtn");
+  const navAuthBtn = document.getElementById("navAuthBtn");
+  const authNavContainer = document.getElementById("authNavContainer");
+  const tabSignInBtn = document.getElementById("tabSignInBtn");
+  const tabRegisterBtn = document.getElementById("tabRegisterBtn");
+  const signInForm = document.getElementById("signInForm");
+  const registerForm = document.getElementById("registerForm");
+  const authAlertBanner = document.getElementById("authAlertBanner");
+  const authSwitchPrompt = document.getElementById("authSwitchPrompt");
+  const quickDemoLoginBtn = document.getElementById("quickDemoLoginBtn");
+  const homeUserName = document.getElementById("homeUserName");
+  const homeUserRole = document.getElementById("homeUserRole");
+  const homeUserAvatar = document.getElementById("homeUserAvatar");
+
+  // Load existing registered accounts from localStorage or seed with default
+  function getRegisteredUsers() {
+    try {
+      const stored = localStorage.getItem(USERS_STORAGE_KEY);
+      if (stored) return JSON.parse(stored);
+    } catch (e) {}
+    // Seed standard demo user
+    const defaultUsers = [
+      {
+        fullName: "Alex Mercer",
+        empId: "EMP-1042",
+        email: "alex.mercer@company.com",
+        dept: "Software Development",
+        shift: "Shift 1",
+        password: "password123"
+      }
+    ];
+    saveRegisteredUsers(defaultUsers);
+    return defaultUsers;
+  }
+
+  function saveRegisteredUsers(users) {
+    try {
+      localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users));
+    } catch (e) {}
+  }
+
+  function getCurrentUser() {
+    try {
+      const stored = localStorage.getItem(CURRENT_USER_KEY);
+      if (stored) return JSON.parse(stored);
+    } catch (e) {}
+    return null;
+  }
+
+  function setCurrentUser(user) {
+    try {
+      if (user) {
+        localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(user));
+      } else {
+        localStorage.removeItem(CURRENT_USER_KEY);
+      }
+    } catch (e) {}
+    renderAuthState();
+  }
+
+  function showAlert(message, isError = true) {
+    if (!authAlertBanner) return;
+    authAlertBanner.textContent = message;
+    authAlertBanner.className = "auth-alert-banner " + (isError ? "error" : "success");
+    authAlertBanner.style.display = "block";
+  }
+
+  function hideAlert() {
+    if (authAlertBanner) authAlertBanner.style.display = "none";
+  }
+
+  function switchAuthTab(mode) {
+    hideAlert();
+    if (mode === "signin") {
+      tabSignInBtn.classList.add("active");
+      tabRegisterBtn.classList.remove("active");
+      signInForm.style.display = "flex";
+      registerForm.style.display = "none";
+      if (authSwitchPrompt) {
+        authSwitchPrompt.innerHTML = 'Need an account? <a href="#" id="authSwitchLink">Register here</a>';
+        const link = document.getElementById("authSwitchLink");
+        if (link) link.addEventListener("click", (e) => { e.preventDefault(); switchAuthTab("register"); });
+      }
+    } else {
+      tabRegisterBtn.classList.add("active");
+      tabSignInBtn.classList.remove("active");
+      registerForm.style.display = "flex";
+      signInForm.style.display = "none";
+      if (authSwitchPrompt) {
+        authSwitchPrompt.innerHTML = 'Already registered? <a href="#" id="authSwitchLink">Sign In here</a>';
+        const link = document.getElementById("authSwitchLink");
+        if (link) link.addEventListener("click", (e) => { e.preventDefault(); switchAuthTab("signin"); });
+      }
+    }
+  }
+
+  function openAuthModal(defaultMode = "signin") {
+    if (!authModalOverlay) return;
+    switchAuthTab(defaultMode);
+    authModalOverlay.style.display = "flex";
+  }
+
+  function closeAuthModal() {
+    if (!authModalOverlay) return;
+    authModalOverlay.style.display = "none";
+    hideAlert();
+  }
+
+  // Update navbar & user status profile card
+  function renderAuthState() {
+    const user = getCurrentUser();
+
+    // 1. Navbar right action controls
+    if (authNavContainer) {
+      if (user) {
+        authNavContainer.innerHTML = `
+          <div class="user-badge-wrap" title="${user.email} (${user.dept})">
+            <span>👤</span>
+            <strong>${user.fullName}</strong>
+            <button id="navLogoutBtn" type="button" class="nav-logout-btn" title="Sign out">Log Out</button>
+          </div>
+        `;
+        const logoutBtn = document.getElementById("navLogoutBtn");
+        if (logoutBtn) {
+          logoutBtn.addEventListener("click", () => {
+            setCurrentUser(null);
+            if (typeof addMessage === "function") {
+              addMessage("bot", "You have signed out. Sign back in anytime to continue your onboarding records.");
+            }
+          });
+        }
+      } else {
+        authNavContainer.innerHTML = `
+          <button id="navAuthBtn" type="button" class="nav-auth-btn" title="Sign In or Create Account">🔐 Sign In</button>
+        `;
+        const authBtn = document.getElementById("navAuthBtn");
+        if (authBtn) {
+          authBtn.addEventListener("click", () => openAuthModal("signin"));
+        }
+      }
+    }
+
+    // 2. Home status profile card
+    if (homeUserName) {
+      homeUserName.textContent = user ? user.fullName : "New Team Member";
+    }
+    if (homeUserRole) {
+      homeUserRole.textContent = user ? `${user.dept} • ${user.shift}` : "Onboarding Phase 1 (Active)";
+    }
+    if (homeUserAvatar) {
+      homeUserAvatar.textContent = user ? "👨‍💼" : "👋";
+    }
+  }
+
+  // Handle Sign In submission
+  if (signInForm) {
+    signInForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const loginId = document.getElementById("loginEmail").value.trim().toLowerCase();
+      const password = document.getElementById("loginPassword").value;
+
+      const users = getRegisteredUsers();
+      const matched = users.find(u => 
+        (u.email.toLowerCase() === loginId || u.empId.toLowerCase() === loginId) && 
+        u.password === password
+      );
+
+      if (matched) {
+        setCurrentUser(matched);
+        showAlert(`Welcome back, ${matched.fullName}! Authenticated successfully.`, false);
+        setTimeout(() => {
+          closeAuthModal();
+          if (typeof addMessage === "function") {
+            addMessage("bot", `Welcome back, ${matched.fullName}! You are signed in as a verified team member (${matched.dept}).`);
+          }
+        }, 600);
+      } else {
+        showAlert("Invalid email/ID or password. Try the Demo Account below or Register.");
+      }
+    });
+  }
+
+  // Handle Quick Demo Login
+  if (quickDemoLoginBtn) {
+    quickDemoLoginBtn.addEventListener("click", () => {
+      const users = getRegisteredUsers();
+      const alex = users[0] || {
+        fullName: "Alex Mercer",
+        empId: "EMP-1042",
+        email: "alex.mercer@company.com",
+        dept: "Software Development",
+        shift: "Shift 1",
+        password: "password123"
+      };
+      setCurrentUser(alex);
+      closeAuthModal();
+      if (typeof addMessage === "function") {
+        addMessage("bot", `Signed in as Demo Employee: Alex Mercer (${alex.dept}).`);
+      }
+    });
+  }
+
+  // Handle Register submission
+  if (registerForm) {
+    registerForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const fullName = document.getElementById("regFullName").value.trim();
+      const empId = document.getElementById("regEmpId").value.trim().toUpperCase();
+      const email = document.getElementById("regEmail").value.trim().toLowerCase();
+      const dept = document.getElementById("regDept").value;
+      const shift = document.getElementById("regShift").value;
+      const password = document.getElementById("regPassword").value;
+      const confirmPassword = document.getElementById("regPasswordConfirm").value;
+
+      if (password !== confirmPassword) {
+        showAlert("Passwords do not match. Please re-enter.");
+        return;
+      }
+
+      const users = getRegisteredUsers();
+      const exists = users.find(u => u.email.toLowerCase() === email || u.empId.toLowerCase() === empId);
+
+      if (exists) {
+        showAlert("An employee account with this Email or ID already exists. Please Sign In.");
+        return;
+      }
+
+      const newUser = {
+        fullName,
+        empId,
+        email,
+        dept,
+        shift,
+        password
+      };
+
+      users.push(newUser);
+      saveRegisteredUsers(users);
+      setCurrentUser(newUser);
+
+      showAlert(`Account created! Welcome to the team, ${fullName}.`, false);
+      setTimeout(() => {
+        closeAuthModal();
+        if (typeof addMessage === "function") {
+          addMessage("bot", `Congratulations ${fullName}! Your employee account (${empId}) is registered and signed in. All task and quiz milestones are linked to your profile.`);
+        }
+      }, 700);
+    });
+  }
+
+  // Tabs Click
+  if (tabSignInBtn) tabSignInBtn.addEventListener("click", () => switchAuthTab("signin"));
+  if (tabRegisterBtn) tabRegisterBtn.addEventListener("click", () => switchAuthTab("register"));
+  if (authModalCloseBtn) authModalCloseBtn.addEventListener("click", closeAuthModal);
+  if (navAuthBtn) navAuthBtn.addEventListener("click", () => openAuthModal("signin"));
+
+  // Toggle Password Visibility Eye buttons
+  document.querySelectorAll(".toggle-password-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const targetId = btn.dataset.target;
+      const input = document.getElementById(targetId);
+      if (input) {
+        const isPassword = input.type === "password";
+        input.type = isPassword ? "text" : "password";
+        btn.textContent = isPassword ? "🙈" : "👁";
+      }
+    });
+  });
+
+  // Close Auth Modal on ESC
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && authModalOverlay.style.display === "flex") {
+      closeAuthModal();
+    }
+  });
+
+  // Initial render
+  renderAuthState();
+})();
+
+
+// ========================================================
+// ADMIN AUTHENTICATION & CONSOLE SYSTEM
+// ========================================================
+
+(function initAdminSystem() {
+  // ── Credentials ──────────────────────────────────────────
+  const ADMIN_CREDENTIALS = {
+    emails:   ["admin@company.com", "adm-001"],
+    password: "masterAdmin2026!",
+    pin:      "998877",
+    authCode: "SEC-HR-2026",
+    fullName: "Dr. Evelyn Vance",
+    title:    "HR Director",
+    role:     "admin"
+  };
+
+  const ADMIN_SESSION_KEY  = "hr_admin_session";
+  const AUDIT_LOG_KEY      = "hr_admin_audit_log";
+  const USERS_STORAGE_KEY  = "hr_registered_users";
+  const EXAM_SCORES_KEY    = "hr_exam_scores";
+
+  // ── DOM references ────────────────────────────────────────
+  const tabAdminBtn         = document.getElementById("tabAdminBtn");
+  const tabSignInBtn2       = document.getElementById("tabSignInBtn");
+  const tabRegisterBtn2     = document.getElementById("tabRegisterBtn");
+  const adminLoginForm      = document.getElementById("adminLoginForm");
+  const signInForm2         = document.getElementById("signInForm");
+  const registerForm2       = document.getElementById("registerForm");
+  const authAlertBanner2    = document.getElementById("authAlertBanner");
+  const quickDemoAdminBtn   = document.getElementById("quickDemoAdminBtn");
+  const adminNavBtn         = document.getElementById("adminNavBtn");
+  const adminLogoutBtn      = document.getElementById("adminLogoutBtn");
+  const adminConsoleName    = document.getElementById("adminConsoleName");
+  const adminConsoleRole    = document.getElementById("adminConsoleRole");
+  const adminStatTotal      = document.getElementById("adminStatTotal");
+  const adminStatActive     = document.getElementById("adminStatActive");
+  const adminStatPending    = document.getElementById("adminStatPending");
+  const adminStatAvgScore   = document.getElementById("adminStatAvgScore");
+  const adminTableBody      = document.getElementById("adminEmployeeTableBody");
+  const adminAuditLog       = document.getElementById("adminAuditLog");
+  const adminRefreshBtn     = document.getElementById("adminRefreshBtn");
+  const adminClearScoresBtn = document.getElementById("adminClearScoresBtn");
+  const adminClearUsersBtn  = document.getElementById("adminClearUsersBtn");
+
+  // ── Audit helpers ─────────────────────────────────────────
+  function getAuditLog() {
+    try { return JSON.parse(localStorage.getItem(AUDIT_LOG_KEY) || "[]"); } catch (e) { return []; }
+  }
+
+  function pushAuditLog(message, level) {
+    level = level || "info";
+    var log = getAuditLog();
+    var ts  = new Date().toLocaleString();
+    log.push({ ts: ts, message: message, level: level });
+    if (log.length > 60) log.splice(0, log.length - 60);
+    try { localStorage.setItem(AUDIT_LOG_KEY, JSON.stringify(log)); } catch (e) {}
+    renderAuditLog();
+  }
+
+  function renderAuditLog() {
+    if (!adminAuditLog) return;
+    var log = getAuditLog();
+    if (!log.length) {
+      adminAuditLog.innerHTML = '<p class="admin-audit-empty">No audit events recorded yet.</p>';
+      return;
+    }
+    adminAuditLog.innerHTML = log.slice().reverse().map(function(e) {
+      var cls = e.level === "warn" ? "warn" : e.level === "danger" ? "danger" : "";
+      return '<div class="audit-entry ' + cls + '">[' + e.ts + '] ' + e.message + '</div>';
+    }).join("");
+  }
+
+  // ── Admin session helpers ─────────────────────────────────
+  function getAdminSession() {
+    try { return JSON.parse(localStorage.getItem(ADMIN_SESSION_KEY)); } catch (e) { return null; }
+  }
+
+  function setAdminSession(data) {
+    try {
+      if (data) localStorage.setItem(ADMIN_SESSION_KEY, JSON.stringify(data));
+      else       localStorage.removeItem(ADMIN_SESSION_KEY);
+    } catch (e) {}
+  }
+
+  // ── Registered users / exam scores ────────────────────────
+  function getRegisteredUsers() {
+    try { return JSON.parse(localStorage.getItem(USERS_STORAGE_KEY) || "[]"); } catch (e) { return []; }
+  }
+
+  function saveRegisteredUsers(users) {
+    try { localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users)); } catch (e) {}
+  }
+
+  function getExamScores() {
+    try { return JSON.parse(localStorage.getItem(EXAM_SCORES_KEY) || "{}"); } catch (e) { return {}; }
+  }
+
+  // ── Alert helpers ─────────────────────────────────────────
+  function showAlert(msg, isError) {
+    if (isError === undefined) isError = true;
+    if (!authAlertBanner2) return;
+    authAlertBanner2.textContent   = msg;
+    authAlertBanner2.className     = "auth-alert-banner " + (isError ? "error" : "success");
+    authAlertBanner2.style.display = "block";
+  }
+
+  function hideAlert() {
+    if (authAlertBanner2) authAlertBanner2.style.display = "none";
+  }
+
+  // ── Auth modal close helper ───────────────────────────────
+  function closeAuthModal() {
+    var overlay = document.getElementById("authModalOverlay");
+    if (overlay) overlay.style.display = "none";
+    hideAlert();
+  }
+
+  // ── Tab switcher ──────────────────────────────────────────
+  function switchToAdminTab() {
+    hideAlert();
+    if (tabAdminBtn)     tabAdminBtn.classList.add("active");
+    if (tabSignInBtn2)   tabSignInBtn2.classList.remove("active");
+    if (tabRegisterBtn2) tabRegisterBtn2.classList.remove("active");
+    if (adminLoginForm)  adminLoginForm.style.display = "flex";
+    if (signInForm2)     signInForm2.style.display    = "none";
+    if (registerForm2)   registerForm2.style.display  = "none";
+  }
+
+  // Patch existing tabs so clicking Sign In / Register deselects Admin tab
+  if (tabSignInBtn2) {
+    tabSignInBtn2.addEventListener("click", function() {
+      if (tabAdminBtn) tabAdminBtn.classList.remove("active");
+      if (adminLoginForm) adminLoginForm.style.display = "none";
+    });
+  }
+  if (tabRegisterBtn2) {
+    tabRegisterBtn2.addEventListener("click", function() {
+      if (tabAdminBtn) tabAdminBtn.classList.remove("active");
+      if (adminLoginForm) adminLoginForm.style.display = "none";
+    });
+  }
+  // ── Tab click navigates directly to /adminlogin page ────
+  if (tabAdminBtn) {
+    tabAdminBtn.addEventListener("click", function(e) {
+      // Direct navigation to dedicated page
+      window.location.href = "adminlogin/";
+    });
+  }
+
+  // ── Validate admin credentials ────────────────────────────
+  function doAdminLogin(email, password, pin, authCode) {
+    var emailNorm = email.trim().toLowerCase();
+    var isEmail   = ADMIN_CREDENTIALS.emails.indexOf(emailNorm) !== -1;
+    var isPass    = password === ADMIN_CREDENTIALS.password;
+    var isPin     = pin === ADMIN_CREDENTIALS.pin;
+    var isAuth    = authCode.trim().toUpperCase() === ADMIN_CREDENTIALS.authCode;
+
+    if (!isEmail) {
+      showAlert("❌ Invalid Admin System ID or Email.");
+      pushAuditLog("FAILED login — unknown identifier: " + emailNorm, "danger");
+      return false;
+    }
+    if (!isPass) {
+      showAlert("❌ Incorrect Master Admin Password.");
+      pushAuditLog("FAILED login — wrong password.", "danger");
+      return false;
+    }
+    if (!isPin) {
+      showAlert("❌ Security PIN does not match.");
+      pushAuditLog("FAILED login — wrong PIN.", "danger");
+      return false;
+    }
+    if (!isAuth) {
+      showAlert("❌ Department Authority Key invalid. Expected: SEC-HR-2026");
+      pushAuditLog("FAILED login — wrong authority key.", "danger");
+      return false;
+    }
+    return true;
+  }
+
+  // ── Start admin session & show console ────────────────────
+  function loginAsAdmin() {
+    var session = {
+      fullName:  ADMIN_CREDENTIALS.fullName,
+      title:     ADMIN_CREDENTIALS.title,
+      role:      "admin",
+      loginTime: new Date().toLocaleString()
+    };
+    setAdminSession(session);
+    pushAuditLog("ADMIN LOGIN — " + session.fullName + " authenticated successfully.");
+    applyAdminUIState(session);
+  }
+
+  function applyAdminUIState(session) {
+    // Show admin nav button
+    if (adminNavBtn) adminNavBtn.style.display = "inline-flex";
+
+    // Update console header
+    if (adminConsoleName) adminConsoleName.textContent = session.title + " — " + session.fullName;
+    if (adminConsoleRole) adminConsoleRole.textContent = "System Administrator • Full Permissions Active";
+
+    // Populate data
+    renderAdminConsole();
+
+    // Close auth modal and go to admin page
+    closeAuthModal();
+    if (typeof showMenu === "function") showMenu("admin");
+  }
+
+  // ── Render console data ───────────────────────────────────
+  function renderAdminConsole() {
+    var users  = getRegisteredUsers();
+    var scores = getExamScores();
+
+    var total      = users.length;
+    var scoreVals  = users.map(function(u) { return scores[u.empId] !== undefined ? scores[u.empId] : null; })
+                          .filter(function(v) { return v !== null; });
+    var avg        = scoreVals.length
+      ? Math.round(scoreVals.reduce(function(a, b) { return a + b; }, 0) / scoreVals.length)
+      : null;
+
+    if (adminStatTotal)    adminStatTotal.textContent    = total;
+    if (adminStatActive)   adminStatActive.textContent   = total;
+    if (adminStatPending)  adminStatPending.textContent  = 0;
+    if (adminStatAvgScore) adminStatAvgScore.textContent = avg !== null ? avg + "%" : "—";
+
+    if (!adminTableBody) return;
+    if (!users.length) {
+      adminTableBody.innerHTML = '<tr><td colspan="8" class="admin-table-empty">No employee records found.</td></tr>';
+      renderAuditLog();
+      return;
+    }
+
+    adminTableBody.innerHTML = users.map(function(u, i) {
+      var score = scores[u.empId] !== undefined ? scores[u.empId] + "%" : "Not Taken";
+      return '<tr>' +
+        '<td>' + (i + 1) + '</td>' +
+        '<td><strong>' + u.fullName + '</strong></td>' +
+        '<td>' + u.empId + '</td>' +
+        '<td>' + u.email + '</td>' +
+        '<td>' + u.dept + '</td>' +
+        '<td>' + u.shift + '</td>' +
+        '<td>' + score + '</td>' +
+        '<td>' +
+          '<button class="admin-action-btn" onclick="adminResetScore(\'' + u.empId + '\')">Reset Score</button>' +
+          '<button class="admin-action-btn remove" onclick="adminRemoveUser(\'' + u.empId + '\')">Remove</button>' +
+        '</td>' +
+        '</tr>';
+    }).join("");
+
+    renderAuditLog();
+  }
+
+  // ── Global action handlers (inline onclick) ───────────────
+  window.adminResetScore = function(empId) {
+    var scores = getExamScores();
+    if (scores[empId] !== undefined) {
+      delete scores[empId];
+      try { localStorage.setItem(EXAM_SCORES_KEY, JSON.stringify(scores)); } catch (e) {}
+      pushAuditLog("SCORE RESET — " + empId + " exam score removed.", "warn");
+      renderAdminConsole();
+    } else {
+      alert("No exam score on record for " + empId + ".");
+    }
+  };
+
+  window.adminRemoveUser = function(empId) {
+    if (!confirm("Remove employee " + empId + " from the registry? This cannot be undone.")) return;
+    var users = getRegisteredUsers().filter(function(u) { return u.empId !== empId; });
+    saveRegisteredUsers(users);
+    // If removed user is currently signed in, sign them out
+    try {
+      var cur = JSON.parse(localStorage.getItem("hr_current_user"));
+      if (cur && cur.empId === empId) localStorage.removeItem("hr_current_user");
+    } catch (e) {}
+    pushAuditLog("USER REMOVED — " + empId + " deleted from registry.", "danger");
+    renderAdminConsole();
+  };
+
+  // ── Form submit handler ───────────────────────────────────
+  if (adminLoginForm) {
+    adminLoginForm.addEventListener("submit", function(e) {
+      e.preventDefault();
+      var email    = (document.getElementById("adminEmail")    || {}).value || "";
+      var password = (document.getElementById("adminPassword") || {}).value || "";
+      var pin      = (document.getElementById("adminPin")      || {}).value || "";
+      var authCode = (document.getElementById("adminAuthCode") || {}).value || "";
+
+      if (doAdminLogin(email, password, pin, authCode)) {
+        showAlert("✅ Credentials verified. Launching Admin Console…", false);
+        setTimeout(function() { loginAsAdmin(); }, 700);
+      }
+    });
+  }
+
+  // ── Quick Demo admin login ────────────────────────────────
+  if (quickDemoAdminBtn) {
+    quickDemoAdminBtn.addEventListener("click", function() {
+      loginAsAdmin();
+    });
+  }
+
+  // ── Control buttons ───────────────────────────────────────
+  if (adminRefreshBtn) {
+    adminRefreshBtn.addEventListener("click", function() {
+      renderAdminConsole();
+      pushAuditLog("REFRESH — Console data refreshed by admin.");
+    });
+  }
+
+  if (adminClearScoresBtn) {
+    adminClearScoresBtn.addEventListener("click", function() {
+      if (!confirm("Reset ALL employee exam scores? This cannot be undone.")) return;
+      try { localStorage.removeItem(EXAM_SCORES_KEY); } catch (e) {}
+      pushAuditLog("SCORES CLEARED — All exam scores wiped by admin.", "warn");
+      renderAdminConsole();
+    });
+  }
+
+  if (adminClearUsersBtn) {
+    adminClearUsersBtn.addEventListener("click", function() {
+      if (!confirm("⚠️ DANGER: Delete entire employee registry? All accounts will be lost.")) return;
+      saveRegisteredUsers([]);
+      try { localStorage.removeItem("hr_current_user"); } catch (e) {}
+      pushAuditLog("REGISTRY CLEARED — All employee accounts deleted by admin.", "danger");
+      renderAdminConsole();
+    });
+  }
+
+  // ── Admin Logout ──────────────────────────────────────────
+  if (adminLogoutBtn) {
+    adminLogoutBtn.addEventListener("click", function() {
+      pushAuditLog("ADMIN LOGOUT — " + ADMIN_CREDENTIALS.fullName + " signed out.");
+      setAdminSession(null);
+      if (adminNavBtn) adminNavBtn.style.display = "none";
+      if (typeof showMenu === "function") showMenu("home");
+    });
+  }
+
+  // ── Admin nav button ──────────────────────────────────────
+  if (adminNavBtn) {
+    adminNavBtn.addEventListener("click", function() {
+      if (typeof showMenu === "function") showMenu("admin");
+    });
+  }
+
+  // ── Restore session on page load ──────────────────────────
+  var existingSession = getAdminSession();
+  if (existingSession) {
+    if (adminNavBtn) adminNavBtn.style.display = "inline-flex";
+    if (adminConsoleName) adminConsoleName.textContent = existingSession.title + " — " + existingSession.fullName;
+    if (adminConsoleRole) adminConsoleRole.textContent = "System Administrator • Full Permissions Active";
+    renderAdminConsole();
+
+    // Check if redirected from /adminlogin with ?menu=admin query param
+    var urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get("menu") === "admin") {
+      if (typeof showMenu === "function") {
+        showMenu("admin");
+      }
+    }
+  }
+
+})();
+
+
+// ========================================================
+// MODE INSTRUCTION BANNERS — Dismiss & Re-show on Mode Switch
+// ========================================================
+
+(function initModeBanners() {
+
+  var chatBanner  = document.getElementById("chatModeInstructions");
+  var examBanner  = document.getElementById("examModeInstructions");
+  var taskHint    = document.getElementById("taskModeHint");
+
+  var closeChatBtn  = document.getElementById("closeChatBanner");
+  var closeExamBtn  = document.getElementById("closeExamBanner");
+  var closeTaskBtn  = document.getElementById("closeTaskHint");
+
+  // Dismiss handlers — hide banner for this session (re-shows on next mode visit)
+  if (closeChatBtn && chatBanner) {
+    closeChatBtn.addEventListener("click", function() {
+      chatBanner.style.display = "none";
+    });
+  }
+  if (closeExamBtn && examBanner) {
+    closeExamBtn.addEventListener("click", function() {
+      examBanner.style.display = "none";
+    });
+  }
+  if (closeTaskBtn && taskHint) {
+    closeTaskBtn.addEventListener("click", function() {
+      taskHint.style.display = "none";
+    });
+  }
+
+  // Re-show banners whenever a mode nav button is clicked
+  var menuBtns = document.querySelectorAll(".menu-btn[data-menu]");
+  menuBtns.forEach(function(btn) {
+    btn.addEventListener("click", function() {
+      var mode = btn.dataset.menu;
+      if (mode === "chat") {
+        if (chatBanner)  chatBanner.style.display  = "";
+        if (taskHint)    taskHint.style.display     = "";
+      }
+      if (mode === "exam") {
+        if (examBanner)  examBanner.style.display  = "";
+      }
+    });
+  });
+
+  // Re-show banners whenever home page "data-goto" buttons are clicked
+  var gotoButtons = document.querySelectorAll("[data-goto]");
+  gotoButtons.forEach(function(btn) {
+    btn.addEventListener("click", function() {
+      var dest = btn.dataset.goto;
+      if (dest === "chat") {
+        if (chatBanner) chatBanner.style.display = "";
+        if (taskHint)   taskHint.style.display   = "";
+      }
+      if (dest === "exam") {
+        if (examBanner) examBanner.style.display = "";
+      }
+    });
+  });
+
+})();
