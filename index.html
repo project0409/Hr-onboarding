@@ -665,7 +665,6 @@
       <div class="auth-tabs">
         <button id="tabSignInBtn" type="button" class="auth-tab-btn active">Employee Sign In</button>
         <button id="tabRegisterBtn" type="button" class="auth-tab-btn">Register Account</button>
-        <a id="tabAdminBtn" href="adminlogin/" class="auth-tab-btn admin-tab" style="text-decoration: none; text-align: center; display: flex; align-items: center; justify-content: center;">🛡️ Admin Login</a>
       </div>
 
       <!-- Feedback / Alert Banner -->
@@ -710,81 +709,6 @@
           <span>Demo Account:</span>
           <button type="button" id="quickDemoLoginBtn" class="quick-demo-btn">
             Sign In as <strong>Alex Mercer</strong> (Engineer)
-          </button>
-        </div>
-      </form>
-
-      <!-- ADMIN LOGIN FORM (REQUIRED CREDENTIALS & FULL PERMISSIONS) -->
-      <form id="adminLoginForm" class="auth-form" style="display: none;">
-        <div class="admin-notice-badge">
-          <span>⚠️</span>
-          <span><strong>Restricted Access:</strong> Requires executive administrative credentials and security tokens.</span>
-        </div>
-        <div class="auth-field">
-          <label for="adminEmail">Admin System ID or Corporate Email</label>
-          <input
-            id="adminEmail"
-            type="text"
-            placeholder="e.g. admin@company.com or ADM-001"
-            autocomplete="username"
-            required
-          >
-        </div>
-        <div class="auth-field">
-          <label for="adminPassword">Master Admin Password</label>
-          <div class="password-input-wrap">
-            <input
-              id="adminPassword"
-              type="password"
-              placeholder="Enter administrative master password"
-              autocomplete="current-password"
-              required
-            >
-            <button type="button" class="toggle-password-btn" data-target="adminPassword">👁</button>
-          </div>
-        </div>
-        <div class="auth-grid-2">
-          <div class="auth-field">
-            <label for="adminPin">Security PIN (6 Digits)</label>
-            <input
-              id="adminPin"
-              type="password"
-              maxlength="6"
-              placeholder="e.g. 998877"
-              required
-            >
-          </div>
-          <div class="auth-field">
-            <label for="adminAuthCode">Department Authority Key</label>
-            <input
-              id="adminAuthCode"
-              type="text"
-              placeholder="e.g. SEC-HR-2026"
-              required
-            >
-          </div>
-        </div>
-
-        <!-- Permissions Manifest -->
-        <div class="admin-permissions-box">
-          <span class="perm-title">Granted Admin Privileges Upon Verification:</span>
-          <div class="perm-list">
-            <span class="perm-chip">✓ Full Employee Management</span>
-            <span class="perm-chip">✓ Policy &amp; Exam Override</span>
-            <span class="perm-chip">✓ System Audit Logs</span>
-            <span class="perm-chip">✓ Floor &amp; Shift Authorizations</span>
-            <span class="perm-chip">✓ Master Task Approval</span>
-          </div>
-        </div>
-
-        <button type="submit" class="auth-submit-btn admin-submit">
-          <span>🛡️</span> Authenticate &amp; Launch Admin Console
-        </button>
-
-        <div class="demo-quick-login">
-          <span>Admin Demo:</span>
-          <button type="button" id="quickDemoAdminBtn" class="quick-demo-btn admin-demo-btn">
-            Quick Sign In as <strong>HR Director Vance</strong> (Admin)
           </button>
         </div>
       </form>

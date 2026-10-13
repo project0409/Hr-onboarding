@@ -2772,38 +2772,6 @@ addMessage(
     hideAlert();
   }
 
-  // ── Tab switcher ──────────────────────────────────────────
-  function switchToAdminTab() {
-    hideAlert();
-    if (tabAdminBtn)     tabAdminBtn.classList.add("active");
-    if (tabSignInBtn2)   tabSignInBtn2.classList.remove("active");
-    if (tabRegisterBtn2) tabRegisterBtn2.classList.remove("active");
-    if (adminLoginForm)  adminLoginForm.style.display = "flex";
-    if (signInForm2)     signInForm2.style.display    = "none";
-    if (registerForm2)   registerForm2.style.display  = "none";
-  }
-
-  // Patch existing tabs so clicking Sign In / Register deselects Admin tab
-  if (tabSignInBtn2) {
-    tabSignInBtn2.addEventListener("click", function() {
-      if (tabAdminBtn) tabAdminBtn.classList.remove("active");
-      if (adminLoginForm) adminLoginForm.style.display = "none";
-    });
-  }
-  if (tabRegisterBtn2) {
-    tabRegisterBtn2.addEventListener("click", function() {
-      if (tabAdminBtn) tabAdminBtn.classList.remove("active");
-      if (adminLoginForm) adminLoginForm.style.display = "none";
-    });
-  }
-  // ── Tab click navigates directly to /adminlogin page ────
-  if (tabAdminBtn) {
-    tabAdminBtn.addEventListener("click", function(e) {
-      // Direct navigation to dedicated page
-      window.location.href = "adminlogin/";
-    });
-  }
-
   // ── Validate admin credentials ────────────────────────────
   function doAdminLogin(email, password, pin, authCode) {
     var emailNorm = email.trim().toLowerCase();

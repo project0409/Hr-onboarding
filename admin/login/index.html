@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Login — HR Onboarding Portal</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0f0e1a;
+      --surface:   #1a1830;
+      --card:      #1e1c32;
+      --border:    #2e2b50;
+      --accent:    #7c3aed;
+      --accent-lt: #a78bfa;
+      --danger:    #ef4444;
+      --success:   #22c55e;
+      --text:      #f1f5f9;
+      --muted:     #94a3b8;
+      --input-bg:  #12111e;
+    }
+
+    body {
+      min-height: 100vh;
+      background: var(--bg);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      color: var(--text);
+      padding: 20px;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    /* Animated background grid */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(124,58,237,0.07) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(124,58,237,0.07) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Glowing orbs */
+    body::after {
+      content: '';
+      position: fixed;
+      top: -120px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 600px;
+      height: 400px;
+      background: radial-gradient(ellipse, rgba(124,58,237,0.22) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── Top bar ── */
+    .top-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 52px;
+      background: rgba(26,24,48,0.92);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      z-index: 100;
+    }
+
+    .top-bar-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--accent-lt);
+      text-decoration: none;
+    }
+
+    .top-bar-brand span { font-size: 18px; }
+
+    .top-bar-back {
+      font-size: 13px;
+      color: var(--muted);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      transition: all 0.15s;
+    }
+    .top-bar-back:hover {
+      color: var(--text);
+      border-color: var(--accent);
+      background: rgba(124,58,237,0.1);
+    }
+
+    /* ── Card ── */
+    .login-card {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 480px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 36px 32px 28px;
+      box-shadow:
+        0 0 0 1px rgba(124,58,237,0.15),
+        0 20px 60px rgba(0,0,0,0.5),
+        0 0 80px rgba(124,58,237,0.08);
+      margin-top: 52px;
+    }
+
+    /* Card header */
+    .card-head {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+
+    .shield-icon {
+      width: 64px;
+      height: 64px;
+      background: linear-gradient(135deg, #4c1d95, #7c3aed);
+      border-radius: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 30px;
+      margin: 0 auto 16px;
+      box-shadow: 0 8px 24px rgba(124,58,237,0.35);
+    }
+
+    .card-head h1 {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+
+    .card-head p {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    /* URL badge */
+    .url-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(124,58,237,0.12);
+      border: 1px solid rgba(124,58,237,0.3);
+      border-radius: 8px;
+      padding: 5px 12px;
+      font-size: 11px;
+      font-family: 'Courier New', monospace;
+      color: var(--accent-lt);
+      margin-bottom: 20px;
+      letter-spacing: 0.03em;
+    }
+    .url-dot {
+      width: 7px;
+      height: 7px;
+      background: var(--success);
+      border-radius: 50%;
+      flex-shrink: 0;
+      box-shadow: 0 0 6px var(--success);
+      animation: pulse-dot 2s ease infinite;
+    }
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.4; }
+    }
+
+    /* Alert */
+    #adminAlert {
+      display: none;
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 16px;
+      border: 1px solid transparent;
+    }
+    #adminAlert.error {
+      background: rgba(239,68,68,0.12);
+      border-color: rgba(239,68,68,0.35);
+      color: #fca5a5;
+    }
+    #adminAlert.success {
+      background: rgba(34,197,94,0.12);
+      border-color: rgba(34,197,94,0.35);
+      color: #86efac;
+    }
+
+    /* Form fields */
+    .field {
+      margin-bottom: 16px;
+    }
+
+    .field label {
+      display: block;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--muted);
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+    }
+
+    .input-wrap {
+      position: relative;
+    }
+
+    .field input {
+      width: 100%;
+      background: var(--input-bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 44px 12px 14px;
+      font-size: 14px;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      font-family: inherit;
+    }
+    .field input::placeholder { color: #4a4870; }
+    .field input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(124,58,237,0.2);
+    }
+    .field input.valid   { border-color: var(--success); }
+    .field input.invalid { border-color: var(--danger); }
+
+    .eye-btn {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      font-size: 16px;
+      color: var(--muted);
+      padding: 4px;
+      transition: color 0.12s;
+    }
+    .eye-btn:hover { color: var(--text); }
+
+    /* Two-column grid */
+    .field-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    /* Permissions manifest */
+    .perms-box {
+      background: rgba(124,58,237,0.07);
+      border: 1px solid rgba(124,58,237,0.2);
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 20px;
+    }
+
+    .perms-title {
+      font-size: 10px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--accent-lt);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .perms-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+
+    .perm-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11.5px;
+      color: #c4b5fd;
+    }
+    .perm-item::before {
+      content: '✓';
+      color: var(--success);
+      font-weight: 900;
+      font-size: 12px;
+    }
+
+    /* Submit button */
+    .submit-btn {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, #5b21b6, #7c3aed);
+      border: none;
+      border-radius: 12px;
+      color: #fff;
+      font-size: 15px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      letter-spacing: 0.02em;
+      box-shadow: 0 6px 20px rgba(124,58,237,0.35);
+      margin-bottom: 14px;
+    }
+    .submit-btn:hover {
+      background: linear-gradient(135deg, #4c1d95, #6d28d9);
+      transform: translateY(-2px);
+      box-shadow: 0 10px 28px rgba(124,58,237,0.45);
+    }
+    .submit-btn:active { transform: translateY(0); }
+    .submit-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* Spinner inside button */
+    .spinner {
+      display: none;
+      width: 18px; height: 18px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Demo button */
+    .demo-btn {
+      width: 100%;
+      padding: 11px;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--accent-lt);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+      margin-bottom: 20px;
+    }
+    .demo-btn:hover {
+      background: rgba(124,58,237,0.1);
+      border-color: var(--accent);
+    }
+
+    /* Divider */
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--muted);
+      font-size: 11px;
+      margin-bottom: 14px;
+    }
+    .divider::before, .divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* Footer */
+    .card-footer {
+      text-align: center;
+      font-size: 12px;
+      color: var(--muted);
+      border-top: 1px solid var(--border);
+      padding-top: 16px;
+    }
+    .card-footer a {
+      color: var(--accent-lt);
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .card-footer a:hover { text-decoration: underline; }
+
+    /* Security seal */
+    .security-seal {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      font-size: 11px;
+      color: #4a4870;
+      margin-top: 12px;
+    }
+
+    /* Success overlay */
+    #successOverlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(15,14,26,0.9);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 16px;
+      text-align: center;
+    }
+    #successOverlay.show { display: flex; }
+
+    .success-ring {
+      width: 80px; height: 80px;
+      border-radius: 50%;
+      border: 3px solid var(--success);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 36px;
+      animation: popIn 0.4s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    @keyframes popIn {
+      from { transform: scale(0); opacity: 0; }
+      to   { transform: scale(1); opacity: 1; }
+    }
+    #successOverlay h2 { font-size: 20px; color: var(--text); }
+    #successOverlay p  { font-size: 14px; color: var(--muted); }
+    .redirect-bar {
+      width: 220px; height: 4px;
+      background: var(--border);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .redirect-fill {
+      height: 100%;
+      background: var(--success);
+      border-radius: 4px;
+      width: 0;
+      transition: width 1.8s linear;
+    }
+
+    /* Responsive */
+    @media (max-width: 520px) {
+      .login-card { padding: 26px 18px 22px; }
+      .field-grid { grid-template-columns: 1fr; }
+      .perms-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top navigation bar -->
+  <nav class="top-bar">
+    <a href="../../index.html" class="top-bar-brand">
+      <span>🛡️</span> HR Onboarding Portal
+    </a>
+    <a href="../../index.html" class="top-bar-back">← Back to Portal</a>
+  </nav>
+
+  <!-- Admin Login Card -->
+  <div class="login-card">
+
+    <!-- Header -->
+    <div class="card-head">
+      <div class="shield-icon">🛡️</div>
+      <h1>Admin Secure Login</h1>
+      <p>Authorized personnel only. All access attempts are logged and monitored.</p>
+
+      <!-- URL indicator badge -->
+      <br>
+      <span class="url-badge">
+        <span class="url-dot"></span>
+        <span id="currentUrlDisplay">https://ip/admin/login</span>
+      </span>
+    </div>
+
+    <!-- Alert banner -->
+    <div id="adminAlert"></div>
+
+    <!-- Login Form -->
+    <form id="adminLoginForm" autocomplete="off" novalidate>
+
+      <!-- Admin Email / ID -->
+      <div class="field">
+        <label for="adminEmail">Admin System ID or Email</label>
+        <div class="input-wrap">
+          <input
+            id="adminEmail"
+            type="text"
+            autocomplete="off"
+            required
+          >
+        </div>
+      </div>
+
+      <!-- Master Password -->
+      <div class="field">
+        <label for="adminPassword">Master Admin Password</label>
+        <div class="input-wrap">
+          <input
+            id="adminPassword"
+            type="password"
+            autocomplete="new-password"
+            required
+          >
+          <button type="button" class="eye-btn" data-target="adminPassword">👁</button>
+        </div>
+      </div>
+
+      <!-- PIN + Authority Key -->
+      <div class="field-grid">
+        <div class="field" style="margin-bottom:0;">
+          <label for="adminPin">Security PIN (6 Digits)</label>
+          <div class="input-wrap">
+            <input
+              id="adminPin"
+              type="password"
+              maxlength="6"
+              required
+            >
+            <button type="button" class="eye-btn" data-target="adminPin">👁</button>
+          </div>
+        </div>
+        <div class="field" style="margin-bottom:0;">
+          <label for="adminAuthCode">Department Authority Key</label>
+          <div class="input-wrap">
+            <input
+              id="adminAuthCode"
+              type="text"
+              required
+            >
+          </div>
+        </div>
+      </div>
+      <div style="margin-bottom:20px;"></div>
+
+      <!-- Permissions Manifest -->
+      <div class="perms-box">
+        <div class="perms-title">🔐 Permissions Granted Upon Verification</div>
+        <div class="perms-grid">
+          <div class="perm-item">Full Employee Management</div>
+          <div class="perm-item">Policy &amp; Exam Override</div>
+          <div class="perm-item">System Audit Logs</div>
+          <div class="perm-item">Floor &amp; Shift Authorizations</div>
+          <div class="perm-item">Master Task Approval</div>
+          <div class="perm-item">Employee Registry Control</div>
+        </div>
+      </div>
+
+      <!-- Submit -->
+      <button type="submit" class="submit-btn" id="submitBtn">
+        <span class="spinner" id="btnSpinner"></span>
+        <span id="btnText">🛡️ Authenticate &amp; Launch Admin Console</span>
+      </button>
+
+      <div class="divider">or use demo credentials</div>
+
+      <!-- Demo Login -->
+      <button type="button" class="demo-btn" id="demoAdminBtn">
+        ⚡ Quick Sign In as <strong>HR Director Dr. Evelyn Vance</strong>
+      </button>
+
+    </form>
+
+    <!-- Footer -->
+    <div class="card-footer">
+      <p>Not an administrator? <a href="../../index.html">Return to Employee Portal →</a></p>
+      <div class="security-seal">🔒 All actions are recorded in the system audit log</div>
+    </div>
+
+  </div>
+
+  <!-- Success Overlay -->
+  <div id="successOverlay">
+    <div class="success-ring">✓</div>
+    <h2>Authentication Successful</h2>
+    <p id="successName">Welcome, Dr. Evelyn Vance</p>
+    <div class="redirect-bar">
+      <div class="redirect-fill" id="redirectFill"></div>
+    </div>
+    <p style="font-size:12px;color:#4a4870;">Redirecting to Admin Console…</p>
+  </div>
+
+  <script>
+    // ── Credentials ──────────────────────────────────────────
+    var ADMIN = {
+      emails:   ["admin@company.com", "adm-001"],
+      password: "masterAdmin2026!",
+      pin:      "998877",
+      authCode: "SEC-HR-2026",
+      fullName: "Dr. Evelyn Vance",
+      title:    "HR Director"
+    };
+
+    var ADMIN_SESSION_KEY = "hr_admin_session";
+    var AUDIT_LOG_KEY     = "hr_admin_audit_log";
+
+    // ── Show current URL in badge ─────────────────────────────
+    var urlDisplay = document.getElementById("currentUrlDisplay");
+    if (urlDisplay) {
+      var loc = window.location;
+      var clean = loc.protocol + "//" + loc.host + "/admin/login";
+      urlDisplay.textContent = clean;
+    }
+
+    // ── Audit log ─────────────────────────────────────────────
+    function pushAudit(msg, level) {
+      level = level || "info";
+      var log = [];
+      try { log = JSON.parse(localStorage.getItem(AUDIT_LOG_KEY) || "[]"); } catch(e){}
+      log.push({ ts: new Date().toLocaleString(), message: msg, level: level });
+      if (log.length > 60) log.splice(0, log.length - 60);
+      try { localStorage.setItem(AUDIT_LOG_KEY, JSON.stringify(log)); } catch(e){}
+    }
+
+    // ── Alert helper ──────────────────────────────────────────
+    var alertEl = document.getElementById("adminAlert");
+    function showAlert(msg, type) {
+      alertEl.textContent = msg;
+      alertEl.className   = type || "error";
+      alertEl.style.display = "block";
+    }
+    function hideAlert() { alertEl.style.display = "none"; }
+
+    // ── Password toggle ───────────────────────────────────────
+    document.querySelectorAll(".eye-btn").forEach(function(btn) {
+      btn.addEventListener("click", function() {
+        var inp = document.getElementById(btn.dataset.target);
+        if (!inp) return;
+        var isPass = inp.type === "password";
+        inp.type = isPass ? "text" : "password";
+        btn.textContent = isPass ? "🙈" : "👁";
+      });
+    });
+
+    // ── Field validation helpers ──────────────────────────────
+    function setFieldState(id, ok) {
+      var el = document.getElementById(id);
+      if (!el) return;
+      el.classList.toggle("valid",   ok === true);
+      el.classList.toggle("invalid", ok === false);
+    }
+
+    // ── Set admin session & redirect ──────────────────────────
+    function doLoginSuccess(name, title) {
+      var session = {
+        fullName:  name  || ADMIN.fullName,
+        title:     title || ADMIN.title,
+        role:      "admin",
+        loginTime: new Date().toLocaleString()
+      };
+      try { localStorage.setItem(ADMIN_SESSION_KEY, JSON.stringify(session)); } catch(e){}
+      pushAudit("ADMIN LOGIN — " + session.fullName + " authenticated via /admin/login page.");
+
+      // Show success overlay
+      var overlay    = document.getElementById("successOverlay");
+      var nameEl     = document.getElementById("successName");
+      var fillEl     = document.getElementById("redirectFill");
+
+      if (nameEl) nameEl.textContent = "Welcome, " + session.fullName;
+      if (overlay) overlay.classList.add("show");
+
+      // Animate redirect bar then navigate
+      setTimeout(function() {
+        if (fillEl) fillEl.style.width = "100%";
+      }, 80);
+
+      setTimeout(function() {
+        window.location.href = "../../index.html?menu=admin";
+      }, 2100);
+    }
+
+    // ── Form submit ───────────────────────────────────────────
+    var form      = document.getElementById("adminLoginForm");
+    var submitBtn = document.getElementById("submitBtn");
+    var spinner   = document.getElementById("btnSpinner");
+    var btnText   = document.getElementById("btnText");
+
+    form.addEventListener("submit", function(e) {
+      e.preventDefault();
+      hideAlert();
+
+      var email    = (document.getElementById("adminEmail").value    || "").trim().toLowerCase();
+      var password = (document.getElementById("adminPassword").value || "");
+      var pin      = (document.getElementById("adminPin").value      || "");
+      var authCode = (document.getElementById("adminAuthCode").value || "").trim().toUpperCase();
+
+      var emailOk  = ADMIN.emails.indexOf(email) !== -1;
+      var passOk   = password === ADMIN.password;
+      var pinOk    = pin === ADMIN.pin;
+      var authOk   = authCode === ADMIN.authCode;
+
+      setFieldState("adminEmail",    emailOk);
+      setFieldState("adminPassword", passOk);
+      setFieldState("adminPin",      pinOk);
+      setFieldState("adminAuthCode", authOk);
+
+      if (!emailOk) {
+        showAlert("❌ Invalid Admin System ID or Email address.", "error");
+        pushAudit("FAILED LOGIN — unknown identifier: " + email, "danger");
+        return;
+      }
+      if (!passOk) {
+        showAlert("❌ Incorrect Master Admin Password.", "error");
+        pushAudit("FAILED LOGIN — wrong password.", "danger");
+        return;
+      }
+      if (!pinOk) {
+        showAlert("❌ Security PIN does not match.", "error");
+        pushAudit("FAILED LOGIN — wrong 6-digit PIN.", "danger");
+        return;
+      }
+      if (!authOk) {
+        showAlert("❌ Department Authority Key is invalid. Expected: SEC-HR-2026", "error");
+        pushAudit("FAILED LOGIN — wrong authority key.", "danger");
+        return;
+      }
+
+      // All valid — show loading state
+      submitBtn.disabled = true;
+      if (spinner) spinner.style.display = "inline-block";
+      if (btnText) btnText.textContent   = "Verifying credentials…";
+
+      showAlert("✅ All credentials verified. Launching Admin Console…", "success");
+
+      setTimeout(function() {
+        doLoginSuccess(ADMIN.fullName, ADMIN.title);
+      }, 800);
+    });
+
+    // ── Demo login ────────────────────────────────────────────
+    document.getElementById("demoAdminBtn").addEventListener("click", function() {
+      hideAlert();
+      pushAudit("DEMO LOGIN — Quick admin sign-in used.");
+      doLoginSuccess(ADMIN.fullName, ADMIN.title);
+    });
+  </script>
+</body>
+</html>
