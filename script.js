@@ -2107,13 +2107,21 @@ addMessage(
 
   if (!overlay || !spotlight || !tooltip) return;
 
-  // Tour Steps: explains every mode by navigating directly to its source!
+  // Tour Steps: Step 0 is the warm welcome Wish, followed by Steps 1 to 8 explaining each mode!
   const tourSteps = [
+    {
+      isWish: true,
+      menu: "home",
+      targetSelector: ".home-hero-card",
+      icon: "🎉",
+      title: "Welcome to Our Company! 🌟",
+      desc: "Wishing you a wonderful first day and great success ahead! We are so excited to have you join our team. Let us take a quick walkthrough of your onboarding portal so you can explore all the tools, policies, and resources available for you."
+    },
     {
       menu: "home",
       targetSelector: ".home-hero-card",
-      icon: "👋",
-      title: "Welcome to Your Onboarding Hub!",
+      icon: "🏠",
+      title: "Your Onboarding Hub",
       desc: "This is your Home base. Here you get an instant overview of your onboarding progress, open tasks, policy assessment status, and quick-action shortcuts."
     },
     {
@@ -2163,7 +2171,7 @@ addMessage(
       targetSelector: "#menuTabs",
       icon: "🚀",
       title: "You're All Set to Go!",
-      desc: "Switch between Home, Chat & Tasks, and Quiz Exam anytime using these top tabs, or toggle Dark Mode on the right. Welcome to the team!"
+      desc: "Switch between Home, Chat & Tasks, and Quiz Exam anytime using these top tabs, or toggle Dark Mode on the right. Best of luck on your onboarding journey!"
     }
   ];
 
@@ -2265,7 +2273,14 @@ addMessage(
     }
 
     // 2. Update step labels & content
-    if (stepLabel) stepLabel.textContent = `Step ${index + 1} of ${tourSteps.length}`;
+    if (stepLabel) {
+      if (step.isWish) {
+        stepLabel.textContent = "👋 Welcome & Best Wishes";
+      } else {
+        const totalSteps = tourSteps.length - 1; // 8 tour steps after the greeting
+        stepLabel.textContent = `Step ${index} of ${totalSteps}`;
+      }
+    }
     if (iconEl) iconEl.textContent = step.icon;
     if (titleEl) titleEl.textContent = step.title;
     if (descEl) descEl.textContent = step.desc;
@@ -2273,7 +2288,9 @@ addMessage(
     // 3. Update nav buttons
     if (prevBtn) prevBtn.disabled = index === 0;
     if (nextBtn) {
-      if (index === tourSteps.length - 1) {
+      if (step.isWish) {
+        nextBtn.textContent = "Start Tour → (Step 1)";
+      } else if (index === tourSteps.length - 1) {
         nextBtn.textContent = "Finish Tour 🎉";
       } else {
         nextBtn.textContent = "Next Mode →";
@@ -2485,10 +2502,39 @@ addMessage(
   // Update navbar & user status profile card
   function renderAuthState() {
     const user = getCurrentUser();
+    let adminSession = null;
+    try {
+      adminSession = JSON.parse(localStorage.getItem("hr_admin_session"));
+    } catch (e) {}
 
     // 1. Navbar right action controls
     if (authNavContainer) {
-      if (user) {
+      if (adminSession) {
+        // Admin is logged in
+        authNavContainer.innerHTML = `
+          <div class="user-badge-wrap admin-badge-wrap" title="${adminSession.title} (Admin)">
+            <span>🛡️</span>
+            <strong>${adminSession.fullName}</strong>
+            <button id="navAdminLogoutBtn" type="button" class="nav-logout-btn" title="Sign out from Admin">Log Out</button>
+          </div>
+        `;
+        const adminLogBtn = document.getElementById("navAdminLogoutBtn");
+        if (adminLogBtn) {
+          adminLogBtn.addEventListener("click", () => {
+            try {
+              localStorage.removeItem("hr_admin_session");
+            } catch (e) {}
+            const adminNav = document.getElementById("adminNavBtn");
+            if (adminNav) adminNav.style.display = "none";
+            renderAuthState();
+            if (typeof showMenu === "function") showMenu("home");
+            if (typeof addMessage === "function") {
+              addMessage("bot", "Admin session signed out. Returned to Home.");
+            }
+          });
+        }
+      } else if (user) {
+        // Employee is logged in
         authNavContainer.innerHTML = `
           <div class="user-badge-wrap" title="${user.email} (${user.dept})">
             <span>👤</span>
@@ -2506,6 +2552,7 @@ addMessage(
           });
         }
       } else {
+        // No one is logged in
         authNavContainer.innerHTML = `
           <button id="navAuthBtn" type="button" class="nav-auth-btn" title="Sign In or Create Account">🔐 Sign In</button>
         `;
@@ -2652,6 +2699,7 @@ addMessage(
 
   // Initial render
   renderAuthState();
+  window.renderAuthState = renderAuthState;
 })();
 
 
@@ -2827,6 +2875,11 @@ addMessage(
     // Populate data
     renderAdminConsole();
 
+    // Update navbar auth state (show admin badge + Log Out button)
+    if (typeof window.renderAuthState === "function") {
+      window.renderAuthState();
+    }
+
     // Close auth modal and go to admin page
     closeAuthModal();
     if (typeof showMenu === "function") showMenu("admin");
@@ -2958,6 +3011,9 @@ addMessage(
       pushAuditLog("ADMIN LOGOUT — " + ADMIN_CREDENTIALS.fullName + " signed out.");
       setAdminSession(null);
       if (adminNavBtn) adminNavBtn.style.display = "none";
+      if (typeof window.renderAuthState === "function") {
+        window.renderAuthState();
+      }
       if (typeof showMenu === "function") showMenu("home");
     });
   }
@@ -2976,13 +3032,27 @@ addMessage(
     if (adminConsoleName) adminConsoleName.textContent = existingSession.title + " — " + existingSession.fullName;
     if (adminConsoleRole) adminConsoleRole.textContent = "System Administrator • Full Permissions Active";
     renderAdminConsole();
+    if (typeof window.renderAuthState === "function") {
+      window.renderAuthState();
+    }
 
-    // Check if redirected from /adminlogin with ?menu=admin query param
+    // If redirected with ?menu=admin from initial login, open admin once, then clean the URL so refresh goes to home
     var urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get("menu") === "admin") {
       if (typeof showMenu === "function") {
         showMenu("admin");
       }
+      try {
+        window.history.replaceState({}, document.title, window.location.pathname);
+      } catch (e) {}
+    } else {
+      if (typeof showMenu === "function") {
+        showMenu("home");
+      }
+    }
+  } else {
+    if (typeof showMenu === "function") {
+      showMenu("home");
     }
   }
 
@@ -3050,4 +3120,67 @@ addMessage(
     });
   });
 
+})();
+
+
+// ========================================================
+// RELOAD CONFIRMATION & RESUBMISSION WARNING MODAL
+// ========================================================
+
+(function initReloadConfirmation() {
+  const reloadModalOverlay = document.getElementById("reloadModalOverlay");
+  const reloadPageBtn = document.getElementById("reloadPageBtn");
+  const reloadModalCloseBtn = document.getElementById("reloadModalCloseBtn");
+  const cancelReloadBtn = document.getElementById("cancelReloadBtn");
+  const confirmReloadBtn = document.getElementById("confirmReloadBtn");
+
+  function openReloadModal() {
+    if (reloadModalOverlay) {
+      reloadModalOverlay.style.display = "flex";
+    }
+  }
+
+  function closeReloadModal() {
+    if (reloadModalOverlay) {
+      reloadModalOverlay.style.display = "none";
+    }
+  }
+
+  if (reloadPageBtn) {
+    reloadPageBtn.addEventListener("click", function(e) {
+      e.preventDefault();
+      openReloadModal();
+    });
+  }
+
+  if (reloadModalCloseBtn) {
+    reloadModalCloseBtn.addEventListener("click", closeReloadModal);
+  }
+
+  if (cancelReloadBtn) {
+    cancelReloadBtn.addEventListener("click", closeReloadModal);
+  }
+
+  if (confirmReloadBtn) {
+    confirmReloadBtn.addEventListener("click", function() {
+      // Proceed with reload
+      closeReloadModal();
+      window.location.reload();
+    });
+  }
+
+  // Intercept keyboard reload shortcuts (F5 and Ctrl+R / Cmd+R)
+  window.addEventListener("keydown", function(e) {
+    if (e.key === "F5" || ((e.ctrlKey || e.metaKey) && (e.key === "r" || e.key === "R"))) {
+      e.preventDefault();
+      openReloadModal();
+    }
+  });
+
+  // Browser reload / navigation confirmation prompt
+  window.addEventListener("beforeunload", function(e) {
+    e.preventDefault();
+    e.returnValue = "Confirm Form Resubmission: The page that you're looking for used information that you entered. Returning to that page might cause any action you took to be repeated.";
+    return e.returnValue;
+  });
 })();

@@ -2863,6 +2863,26 @@ body.dark-mode .user-badge-wrap {
   color: #93c5fd;
 }
 
+.user-badge-wrap.admin-badge-wrap {
+  background: #f5f3ff;
+  border-color: #ddd6fe;
+  color: #6d28d9;
+}
+
+body.dark-mode .user-badge-wrap.admin-badge-wrap {
+  background: #2e1065;
+  border-color: #5b21b6;
+  color: #c4b5fd;
+}
+
+.user-badge-wrap.admin-badge-wrap strong {
+  color: #5b21b6;
+}
+
+body.dark-mode .user-badge-wrap.admin-badge-wrap strong {
+  color: #ddd6fe;
+}
+
 .user-badge-wrap strong {
   color: #0f2f75;
 }
@@ -4173,4 +4193,101 @@ body.dark-mode .task-mode-hint p {
   .mode-instr-chips {
     padding-left: 0;
   }
+}
+
+
+/* ============================================================
+   RELOAD & RESUBMISSION MODAL STYLES
+   ============================================================ */
+
+.reload-nav-btn {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+  color: #334155;
+  font-weight: 700;
+}
+
+.reload-nav-btn:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+body.dark-mode .reload-nav-btn {
+  background: #1e293b;
+  border-color: #475569;
+  color: #f1f5f9;
+}
+
+.reload-confirm-card {
+  max-width: 480px;
+}
+
+.reload-modal-body {
+  padding: 20px 24px;
+}
+
+.reload-warning-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 14px;
+}
+
+body.dark-mode .reload-warning-box {
+  background: #451a03;
+  border-color: #78350f;
+}
+
+.reload-warning-box .warning-icon {
+  font-size: 28px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.reload-warning-box p {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: #92400e;
+}
+
+body.dark-mode .reload-warning-box p {
+  color: #fde68a;
+}
+
+.reload-action-note {
+  font-size: 12px;
+  color: #64748b;
+  padding: 0 4px;
+}
+
+body.dark-mode .reload-action-note {
+  color: #94a3b8;
+}
+
+.reload-modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 16px 24px;
+  background: #f8fafc;
+  border-top: 1px solid #e2e8f0;
+  border-radius: 0 0 16px 16px;
+}
+
+body.dark-mode .reload-modal-footer {
+  background: #0f172a;
+  border-color: #334155;
+}
+
+.reload-confirm-btn {
+  width: auto;
+  padding: 10px 18px;
+  font-size: 13px;
+  margin-bottom: 0;
 }

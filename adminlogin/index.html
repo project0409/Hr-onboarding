@@ -484,12 +484,6 @@
       <h1>Admin Secure Login</h1>
       <p>Authorized personnel only. All access attempts are logged and monitored.</p>
 
-      <!-- URL indicator badge -->
-      <br>
-      <span class="url-badge">
-        <span class="url-dot"></span>
-        <span id="currentUrlDisplay">http://127.0.0.1:5500/adminlogin</span>
-      </span>
     </div>
 
     <!-- Alert banner -->
@@ -569,13 +563,6 @@
       <button type="submit" class="submit-btn" id="submitBtn">
         <span class="spinner" id="btnSpinner"></span>
         <span id="btnText">🛡️ Authenticate &amp; Launch Admin Console</span>
-      </button>
-
-      <div class="divider">or use demo credentials</div>
-
-      <!-- Demo Login -->
-      <button type="button" class="demo-btn" id="demoAdminBtn">
-        ⚡ Quick Sign In as <strong>HR Director Dr. Evelyn Vance</strong>
       </button>
 
     </form>
@@ -744,13 +731,6 @@
       setTimeout(function() {
         doLoginSuccess(ADMIN.fullName, ADMIN.title);
       }, 800);
-    });
-
-    // ── Demo login ────────────────────────────────────────────
-    document.getElementById("demoAdminBtn").addEventListener("click", function() {
-      hideAlert();
-      pushAudit("DEMO LOGIN — Quick admin sign-in used.");
-      doLoginSuccess(ADMIN.fullName, ADMIN.title);
     });
   </script>
 </body>
