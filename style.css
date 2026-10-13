@@ -2999,7 +2999,7 @@ body.dark-mode .auth-close-btn:hover {
 /* Tabs Switcher */
 .auth-tabs {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-columns: 1fr 1fr;
   padding: 12px 24px 0;
   gap: 10px;
   background: #f8fafc;
