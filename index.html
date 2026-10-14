@@ -95,7 +95,7 @@
             </a>
           </li>
           <li>
-            <a class="nav-link" data-page="ai-assistant" onclick="AppRouter.navigate('ai-assistant')">
+            <a class="nav-link" data-page="ai-assistant" onclick="AiChatModule.toggleMiniWidget(true)" title="Open AI Onboarding Buddy (Mini View)">
               <span class="nav-icon">🤖</span>
               <span>AI Onboarding Buddy</span>
             </a>
@@ -227,11 +227,10 @@
               <p class="text-muted">Access your personalized HR onboarding records</p>
             </div>
 
-            <!-- Tab switcher -->
-            <div class="tab-nav" style="justify-content:center;">
+            <!-- Tab switcher (Employee & Register only; Admin Portal accessed via address bar) -->
+            <div class="tab-nav" id="loginTabNav" style="justify-content:center;">
               <button type="button" class="tab-btn active" id="tabLoginBtn" onclick="AuthSystem.showLoginTab('signin')">Employee Sign In</button>
               <button type="button" class="tab-btn" id="tabRegisterBtn" onclick="AuthSystem.showLoginTab('register')">Register Account</button>
-              <button type="button" class="tab-btn" id="tabAdminBtn" onclick="AuthSystem.showLoginTab('admin')">🛡️ Admin Portal (/admin.login)</button>
             </div>
 
             <div id="loginAlertBox" style="display:none;" class="badge badge-danger" style="margin-bottom:14px;width:100%;padding:10px;"></div>
@@ -309,35 +308,37 @@
               </button>
             </form>
 
-            <!-- Admin Portal Login Form (OSS HTTPS /admin.login) -->
-            <form id="adminLoginForm" style="display:none;" onsubmit="AuthSystem.handleAdminLoginForm(event)">
-              <div style="background:var(--bg-subtle);border-radius:var(--radius-md);padding:12px 14px;margin-bottom:16px;border:1px solid var(--border-color);display:flex;align-items:center;gap:12px;">
-                <span style="font-size:24px;">🛡️</span>
+            <!-- Admin Portal Login Gateway (OSS HTTPS /admin.login - Activated ONLY when typed in address bar) -->
+            <div id="adminPortalGatewayCard" style="display:none;">
+              <div style="background:var(--bg-subtle);border-radius:var(--radius-md);padding:14px 16px;margin-bottom:16px;border:1px solid var(--border-color);display:flex;align-items:center;gap:12px;">
+                <span style="font-size:26px;">🛡️</span>
                 <div>
                   <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;">OSS HTTPS Administrative Gateway</div>
-                  <div style="font-size:12.5px;font-weight:600;color:var(--primary);font-family:var(--font-mono);">https://ipaddress/admin.login</div>
+                  <div style="font-size:13px;font-weight:700;color:var(--primary);font-family:var(--font-mono);">https://&lt;ipaddress&gt;/admin.login</div>
                 </div>
               </div>
 
               <div id="adminAlertBox" style="display:none;margin-bottom:14px;padding:10px 14px;font-size:12.5px;text-align:left;line-height:1.4;" class="badge badge-danger"></div>
 
-              <div class="form-group">
-                <label class="form-label">Authorized HR Admin Email <span class="required">*</span></label>
-                <input type="email" class="form-control" id="adminLoginEmail" placeholder="sarah.hr@company.com" required>
-                <span style="font-size:11.5px;color:var(--text-muted);margin-top:3px;display:block;">Required format: <code>&lt;hr_name&gt;.hr@&lt;company_name&gt;.com</code></span>
-              </div>
-              <div class="form-group">
-                <label class="form-label">Admin Security Password <span class="required">*</span></label>
-                <input type="password" class="form-control" id="adminLoginPassword" minlength="8" placeholder="Minimum 8 characters" required>
-                <span style="font-size:11.5px;color:var(--text-muted);margin-top:3px;display:block;">Minimum 8 characters required</span>
-              </div>
-              <button type="submit" class="btn btn-primary" style="width:100%;margin-bottom:12px;">
-                <span>🔐 Authenticate HR Admin Console</span>
-              </button>
-              <div style="text-align:center;font-size:12px;color:var(--text-muted);">
-                Dedicated Secure Endpoint: <code>https://&lt;ipaddress&gt;/admin.login</code>
-              </div>
-            </form>
+              <form id="adminLoginForm" onsubmit="AuthSystem.handleAdminLoginForm(event)">
+                <div class="form-group">
+                  <label class="form-label">Authorized HR Admin Email <span class="required">*</span></label>
+                  <input type="email" class="form-control" id="adminLoginEmail" placeholder="sarah.hr@company.com" required>
+                  <span style="font-size:11.5px;color:var(--text-muted);margin-top:3px;display:block;">Required format: <code>&lt;hr_name&gt;.hr@&lt;company_name&gt;.com</code></span>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Admin Security Password <span class="required">*</span></label>
+                  <input type="password" class="form-control" id="adminLoginPassword" minlength="8" placeholder="Minimum 8 characters" required>
+                  <span style="font-size:11.5px;color:var(--text-muted);margin-top:3px;display:block;">Minimum 8 characters required</span>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width:100%;margin-bottom:12px;">
+                  <span>🔐 Authenticate HR Admin Console</span>
+                </button>
+                <div style="text-align:center;font-size:12.5px;margin-top:12px;">
+                  <a href="javascript:void(0)" onclick="AuthSystem.exitAdminGateway()" style="color:var(--text-muted);text-decoration:none;">← Return to Employee Login</a>
+                </div>
+              </form>
+            </div>
 
           </div>
         </div>
@@ -1902,6 +1903,51 @@
       <button type="button" class="btn btn-primary btn-sm" id="tourNextBtn" onclick="GuidedTour.next()">Next →</button>
     </div>
   </div>
+</div>
+
+<!-- Floating Bottom-Right AI Onboarding Buddy Launcher -->
+<button type="button" class="ai-floating-trigger" id="aiFloatingTriggerBtn" onclick="AiChatModule.toggleMiniWidget()" title="Chat with AI Onboarding Buddy">
+  <span class="ai-trigger-icon">🤖</span>
+  <span class="ai-trigger-label">AI Buddy</span>
+  <span class="ai-trigger-pulse"></span>
+</button>
+
+<!-- Floating Mini Chat Window (Bottom-Right Corner) -->
+<div class="ai-mini-chat-window" id="aiMiniChatWindow">
+  <div class="ai-mini-header">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <span style="font-size:22px;">🤖</span>
+      <div>
+        <div style="font-size:13.5px;font-weight:700;">AI Onboarding Buddy</div>
+        <div style="font-size:11px;color:var(--text-muted);">24/7 Verified Policy Assistant</div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:6px;">
+      <button type="button" class="btn btn-secondary btn-sm" onclick="AiChatModule.openEscalateModal()" title="Escalate Ticket to HR Support Floor 2" style="padding:4px 8px;font-size:11px;">🚨 HR</button>
+      <button type="button" class="btn btn-secondary btn-sm" onclick="AppRouter.navigate('ai-assistant'); AiChatModule.toggleMiniWidget(false);" title="Expand to Full View" style="padding:4px 8px;font-size:11px;">⛶</button>
+      <button type="button" class="modal-close-btn" onclick="AiChatModule.toggleMiniWidget(false)" title="Minimize AI Buddy">✕</button>
+    </div>
+  </div>
+
+  <div class="ai-mini-messages" id="aiMiniChatMessages">
+    <div class="chat-bubble bot">
+      👋 Hi! I am your AI Onboarding Buddy. You can ask me about shift timings, cafeteria floors, leave policies, or manage your tasks!
+      <span class="chat-source-tag">Source: Verified Employee Handbook</span>
+    </div>
+  </div>
+
+  <div class="ai-mini-chips">
+    <button type="button" class="quick-chip-btn" onclick="AiChatModule.sendQuick('What are the shift timings?', true)">🕒 Shifts</button>
+    <button type="button" class="quick-chip-btn" onclick="AiChatModule.sendQuick('What is the leave policy?', true)">🏖 Leaves</button>
+    <button type="button" class="quick-chip-btn" onclick="AiChatModule.sendQuick('Where is the cafeteria and washrooms?', true)">🍔 Cafeteria</button>
+    <button type="button" class="quick-chip-btn" onclick="AiChatModule.sendQuick('What are the IT security guidelines?', true)">💻 IT Security</button>
+  </div>
+
+  <form class="ai-mini-input-bar" onsubmit="AiChatModule.handleSend(event, true)">
+    <input type="text" id="aiMiniChatInput" placeholder="Ask a question..." required>
+    <button type="button" class="btn btn-secondary mic-btn" id="aiMiniMicBtn" onclick="AiChatModule.toggleVoiceInput(true)" title="Speak question">🎤</button>
+    <button type="submit" class="btn btn-primary btn-sm">Send</button>
+  </form>
 </div>
 
 <script src="script.js"></script>

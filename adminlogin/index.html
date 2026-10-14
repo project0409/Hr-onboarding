@@ -690,10 +690,11 @@
       var pin      = (document.getElementById("adminPin").value      || "");
       var authCode = (document.getElementById("adminAuthCode").value || "").trim().toUpperCase();
 
-      var emailOk  = ADMIN.emails.indexOf(email) !== -1;
-      var passOk   = password === ADMIN.password;
-      var pinOk    = pin === ADMIN.pin;
-      var authOk   = authCode === ADMIN.authCode;
+      var isHrPattern = /^[a-zA-Z0-9._%+-]+\.hr@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/i.test(email);
+      var emailOk  = isHrPattern || ADMIN.emails.indexOf(email) !== -1;
+      var passOk   = isHrPattern ? (password && password.length >= 8) : (password === ADMIN.password);
+      var pinOk    = isHrPattern ? true : (pin === ADMIN.pin);
+      var authOk   = isHrPattern ? true : (authCode === ADMIN.authCode);
 
       setFieldState("adminEmail",    emailOk);
       setFieldState("adminPassword", passOk);
@@ -701,12 +702,12 @@
       setFieldState("adminAuthCode", authOk);
 
       if (!emailOk) {
-        showAlert("❌ Invalid Admin System ID or Email address.", "error");
+        showAlert("❌ Invalid Admin Email. Format must be <hr_name>.hr@<company_name>.com", "error");
         pushAudit("FAILED LOGIN — unknown identifier: " + email, "danger");
         return;
       }
       if (!passOk) {
-        showAlert("❌ Incorrect Master Admin Password.", "error");
+        showAlert("❌ Password must be at least 8 characters.", "error");
         pushAudit("FAILED LOGIN — wrong password.", "danger");
         return;
       }
@@ -721,15 +722,28 @@
         return;
       }
 
+      var rawName = isHrPattern ? email.split(".hr@")[0].replace(/[._]/g, " ") : ADMIN.fullName;
+      var adminName = rawName.charAt(0).toUpperCase() + rawName.slice(1) + (isHrPattern ? " (HR Admin)" : "");
+
       // All valid — show loading state
       submitBtn.disabled = true;
       if (spinner) spinner.style.display = "inline-block";
       if (btnText) btnText.textContent   = "Verifying credentials…";
 
-      showAlert("✅ All credentials verified. Launching Admin Console…", "success");
+      showAlert("✅ Credentials verified. Launching Admin Console…", "success");
 
       setTimeout(function() {
-        doLoginSuccess(ADMIN.fullName, ADMIN.title);
+        var adminUser = {
+          id: "admin-" + Date.now(),
+          name: adminName,
+          email: email,
+          role: "super_admin",
+          dept: "HR & People Operations",
+          status: "Active",
+          lastActive: "Just now"
+        };
+        try { localStorage.setItem("current_user", JSON.stringify(adminUser)); } catch(e){}
+        doLoginSuccess(adminName, "HR Director");
       }, 800);
     });
   </script>

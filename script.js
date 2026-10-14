@@ -484,7 +484,7 @@ const AuthSystem = {
     this.setCurrentUser(adminUser);
     GlobalApp.showToast(`🛡️ Admin console unlocked! Welcome, ${adminUser.name}.`);
     AppRouter.refreshPermissions();
-    AppRouter.navigate("main-dashboard");
+    AppRouter.navigate("admin-portal");
   },
   handleRegisterForm(e) {
     e.preventDefault();
@@ -535,23 +535,45 @@ const AuthSystem = {
   showLoginTab(tab) {
     const isSignIn = tab === "signin";
     const isReg = tab === "register";
-    const isAdmin = tab === "admin";
 
     const tabLoginBtn = document.getElementById("tabLoginBtn");
     const tabRegBtn = document.getElementById("tabRegisterBtn");
-    const tabAdminBtn = document.getElementById("tabAdminBtn");
+    const loginTabNav = document.getElementById("loginTabNav");
+    const adminGateway = document.getElementById("adminPortalGatewayCard");
+
+    if (loginTabNav) loginTabNav.style.display = "flex";
+    if (adminGateway) adminGateway.style.display = "none";
 
     if (tabLoginBtn) tabLoginBtn.classList.toggle("active", isSignIn);
     if (tabRegBtn) tabRegBtn.classList.toggle("active", isReg);
-    if (tabAdminBtn) tabAdminBtn.classList.toggle("active", isAdmin);
 
     const loginForm = document.getElementById("loginForm");
     const regForm = document.getElementById("registerForm");
-    const adminForm = document.getElementById("adminLoginForm");
 
     if (loginForm) loginForm.style.display = isSignIn ? "block" : "none";
     if (regForm) regForm.style.display = isReg ? "block" : "none";
-    if (adminForm) adminForm.style.display = isAdmin ? "block" : "none";
+  },
+  showAdminGateway() {
+    const loginTabNav = document.getElementById("loginTabNav");
+    const loginForm = document.getElementById("loginForm");
+    const regForm = document.getElementById("registerForm");
+    const adminGateway = document.getElementById("adminPortalGatewayCard");
+
+    if (loginTabNav) loginTabNav.style.display = "none";
+    if (loginForm) loginForm.style.display = "none";
+    if (regForm) regForm.style.display = "none";
+    if (adminGateway) adminGateway.style.display = "block";
+
+    const emailInput = document.getElementById("adminLoginEmail");
+    if (emailInput) setTimeout(() => emailInput.focus(), 150);
+  },
+  exitAdminGateway() {
+    this.showLoginTab("signin");
+    try {
+      if (window.history && window.history.replaceState) {
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+    } catch(e) {}
   },
   openForgotPassword() {
     alert("Password reset instructions sent to your registered official email address. You may also contact Floor 3 IT Support.");
@@ -2122,7 +2144,9 @@ const ExamModule = {
       </div>
     `;
 
-    certView.scrollIntoView({ behavior: "smooth" });
+    if (certView && typeof certView.scrollIntoView === "function") {
+      certView.scrollIntoView({ behavior: "smooth" });
+    }
   },
   showInstructions() {
     alert("Exam Instructions:\n\n- 30 Multiple Choice Questions grounded in official company handbook documents.\n- Time limit: 20 Minutes.\n- Passing grade: 60%.\n- Questions marked for review will be shown in purple on the palette.");
@@ -2142,38 +2166,61 @@ const AiChatModule = {
   isRecording: false,
   recognition: null,
 
-  handleSend(e) {
-    e.preventDefault();
-    const input = document.getElementById("aiChatInput");
-    const query = input.value.trim();
+  toggleMiniWidget(forceOpen) {
+    const win = document.getElementById("aiMiniChatWindow");
+    if (!win) return;
+    const isCurrentlyOpen = win.classList.contains("active");
+    const shouldOpen = forceOpen !== undefined ? !!forceOpen : !isCurrentlyOpen;
+    win.classList.toggle("active", shouldOpen);
+    if (shouldOpen) {
+      const input = document.getElementById("aiMiniChatInput");
+      if (input) setTimeout(() => input.focus(), 150);
+    }
+  },
+  handleSend(e, isMini = false) {
+    if (e && e.preventDefault) e.preventDefault();
+    const inputId = isMini ? "aiMiniChatInput" : "aiChatInput";
+    const input = document.getElementById(inputId) || document.getElementById("aiChatInput");
+    const query = input ? input.value.trim() : "";
     if (!query) return;
 
     this.postMessage(query, "user");
-    input.value = "";
+    
+    const mainInput = document.getElementById("aiChatInput");
+    const miniInput = document.getElementById("aiMiniChatInput");
+    if (mainInput) mainInput.value = "";
+    if (miniInput) miniInput.value = "";
 
     setTimeout(() => {
       this.generateReply(query);
     }, 400);
   },
-  sendQuick(text) {
-    document.getElementById("aiChatInput").value = text;
-    this.handleSend(new Event("submit"));
+  sendQuick(text, isMini = false) {
+    const input = document.getElementById(isMini ? "aiMiniChatInput" : "aiChatInput");
+    if (input) input.value = text;
+    this.handleSend(new Event("submit"), isMini);
   },
   postMessage(text, sender, source = null) {
-    const container = document.getElementById("aiChatMessages");
-    const bubble = document.createElement("div");
-    bubble.className = `chat-bubble ${sender}`;
-    bubble.textContent = text;
+    const containers = [
+      document.getElementById("aiChatMessages"),
+      document.getElementById("aiMiniChatMessages")
+    ].filter(Boolean);
 
-    if (source) {
-      const srcEl = document.createElement("span");
-      srcEl.className = "chat-source-tag";
-      srcEl.textContent = `Source: ${source}`;
-      bubble.appendChild(srcEl);
-    }
+    containers.forEach(container => {
+      const bubble = document.createElement("div");
+      bubble.className = `chat-bubble ${sender}`;
+      bubble.textContent = text;
 
-    container.appendChild(bubble);
-    container.scrollTop = container.scrollHeight;
+      if (source) {
+        const srcEl = document.createElement("span");
+        srcEl.className = "chat-source-tag";
+        srcEl.textContent = `Source: ${source}`;
+        bubble.appendChild(srcEl);
+      }
+
+      container.appendChild(bubble);
+      container.scrollTop = container.scrollHeight;
+    });
   },
   generateReply(userQuery) {
     const q = userQuery.toLowerCase();
@@ -2217,8 +2264,9 @@ const AiChatModule = {
       );
     }
   },
-  toggleVoiceInput() {
-    const micBtn = document.getElementById("aiMicBtn");
+  toggleVoiceInput(isMini = false) {
+    const micBtn = document.getElementById(isMini ? "aiMiniMicBtn" : "aiMicBtn");
+    const otherMicBtn = document.getElementById(isMini ? "aiMicBtn" : "aiMiniMicBtn");
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
     if (!SpeechRecognition) {
@@ -2229,7 +2277,8 @@ const AiChatModule = {
     if (this.isRecording) {
       if (this.recognition) this.recognition.stop();
       this.isRecording = false;
-      micBtn.classList.remove("active");
+      if (micBtn) micBtn.classList.remove("active");
+      if (otherMicBtn) otherMicBtn.classList.remove("active");
       return;
     }
 
@@ -2239,24 +2288,28 @@ const AiChatModule = {
 
     this.recognition.onstart = () => {
       this.isRecording = true;
-      micBtn.classList.add("active");
+      if (micBtn) micBtn.classList.add("active");
+      if (otherMicBtn) otherMicBtn.classList.add("active");
       GlobalApp.showToast("🎙️ Listening... Speak your question now.");
     };
 
     this.recognition.onresult = (e) => {
       const speechResult = e.results[0][0].transcript;
-      document.getElementById("aiChatInput").value = speechResult;
-      this.handleSend(new Event("submit"));
+      const targetInput = document.getElementById(isMini ? "aiMiniChatInput" : "aiChatInput");
+      if (targetInput) targetInput.value = speechResult;
+      this.handleSend(new Event("submit"), isMini);
     };
 
     this.recognition.onerror = () => {
       this.isRecording = false;
-      micBtn.classList.remove("active");
+      if (micBtn) micBtn.classList.remove("active");
+      if (otherMicBtn) otherMicBtn.classList.remove("active");
     };
 
     this.recognition.onend = () => {
       this.isRecording = false;
-      micBtn.classList.remove("active");
+      if (micBtn) micBtn.classList.remove("active");
+      if (otherMicBtn) otherMicBtn.classList.remove("active");
     };
 
     this.recognition.start();
@@ -2652,14 +2705,33 @@ const GlobalApp = {
     AuthSystem.applySessionUI();
     AppRouter.refreshPermissions();
 
-    // Check URL parameters (e.g. ?menu=admin, /admin.login, #admin.login, ?page=admin-login)
-    const urlParams = new URLSearchParams(window.location.search);
-    const fullHref = (window.location.href || "").toLowerCase();
+    // Check URL address bar for administrative gateway (e.g. /admin.login, #admin.login, ?admin.login)
+    const checkAddressBarRoute = () => {
+      const fullHref = (window.location.href || "").toLowerCase();
+      const hash = (window.location.hash || "").toLowerCase();
+      const search = (window.location.search || "").toLowerCase();
+      const urlParams = new URLSearchParams(window.location.search);
 
-    if (fullHref.includes("admin.login") || urlParams.get("page") === "admin-login" || urlParams.get("menu") === "admin") {
-      AppRouter.navigate("login");
-      AuthSystem.showLoginTab("admin");
-    } else {
+      if (
+        fullHref.includes("admin.login") || 
+        hash.includes("admin.login") || 
+        search.includes("admin.login") || 
+        urlParams.get("page") === "admin-login" || 
+        urlParams.get("menu") === "admin"
+      ) {
+        AppRouter.navigate("login");
+        AuthSystem.showAdminGateway();
+        return true;
+      }
+      return false;
+    };
+
+    window.addEventListener("hashchange", checkAddressBarRoute);
+    window.addEventListener("popstate", checkAddressBarRoute);
+
+    const handledAdmin = checkAddressBarRoute();
+    if (!handledAdmin) {
+      const urlParams = new URLSearchParams(window.location.search);
       const targetPage = urlParams.get("page") || "main-dashboard";
       AppRouter.navigate(targetPage);
     }
