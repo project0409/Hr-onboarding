@@ -154,8 +154,8 @@ const StorageKeys = {
 
 const SeedData = {
   users: [
-    { id: "usr-01", name: "Dr. Evelyn Vance", email: "admin@company.com", role: "super_admin", dept: "Executive Management", status: "Active", lastActive: "Just now" },
-    { id: "usr-02", name: "Sarah Jenkins", email: "sarah.j@company.com", role: "hr_admin", dept: "HR & People Operations", status: "Active", lastActive: "10 mins ago" },
+    { id: "usr-01", name: "Dr. Evelyn Vance", email: "evelyn.hr@company.com", role: "super_admin", dept: "Executive Management", status: "Active", lastActive: "Just now" },
+    { id: "usr-02", name: "Sarah Jenkins", email: "sarah.hr@company.com", role: "hr_admin", dept: "HR & People Operations", status: "Active", lastActive: "10 mins ago" },
     { id: "usr-03", name: "Alex Mercer", email: "alex.mercer@company.com", role: "employee", dept: "Software Development", status: "Active", lastActive: "Just now", empId: "EMP-1042" },
     { id: "usr-04", name: "David Kumar", email: "david.k@company.com", role: "manager", dept: "Software Development", status: "Active", lastActive: "1 hour ago" },
     { id: "usr-05", name: "Marcus Vance", email: "marcus.v@company.com", role: "it_admin", dept: "IT Support", status: "Active", lastActive: "25 mins ago" },
@@ -377,7 +377,11 @@ const AuthSystem = {
     DB.pushNotification("Role Switched", `Active view changed to ${targetUser.role.toUpperCase()}`, "approval");
     GlobalApp.showToast(`Switched active role to ${targetUser.name} (${targetUser.role})`);
     AppRouter.refreshPermissions();
-    AppRouter.navigate("main-dashboard");
+    if (targetUser.role === "employee") {
+      AppRouter.navigate("profile");
+    } else {
+      AppRouter.navigate("main-dashboard");
+    }
   },
   loginAs(roleKey) {
     this.switchRoleDemo(roleKey);
@@ -385,10 +389,101 @@ const AuthSystem = {
   handleLoginForm(e) {
     e.preventDefault();
     const id = document.getElementById("loginId").value.trim().toLowerCase();
+    const password = document.getElementById("loginPassword")?.value || "";
     const users = DB.get(StorageKeys.USERS);
-    const matched = users.find(u => u.email.toLowerCase() === id || (u.empId && u.empId.toLowerCase() === id)) || users[0];
+    const candidates = DB.get(StorageKeys.CANDIDATES);
+
+    let matched = users.find(u => u.email.toLowerCase() === id || (u.empId && u.empId.toLowerCase() === id));
+    if (!matched) {
+      const c = candidates.find(item => item.email.toLowerCase() === id || item.id.toLowerCase() === id);
+      if (c) {
+        matched = {
+          id: "usr-" + Date.now(),
+          name: c.name,
+          email: c.email,
+          role: "employee",
+          dept: c.dept,
+          status: "Active",
+          lastActive: "Just now",
+          empId: c.id,
+          photo: c.photo || null
+        };
+        users.push(matched);
+        DB.set(StorageKeys.USERS, users);
+      } else {
+        matched = {
+          id: "usr-" + Date.now(),
+          name: id.includes("@") ? id.split("@")[0].replace(".", " ") : id,
+          email: id.includes("@") ? id : `${id}@company.com`,
+          role: "employee",
+          dept: "Software Development",
+          status: "Active",
+          lastActive: "Just now",
+          empId: id.startsWith("EMP") ? id.toUpperCase() : "EMP-" + Math.floor(1000 + Math.random() * 9000)
+        };
+        users.push(matched);
+        DB.set(StorageKeys.USERS, users);
+      }
+    }
+
     this.setCurrentUser(matched);
-    GlobalApp.showToast(`Welcome back, ${matched.name}!`);
+    GlobalApp.showToast(`🔓 Welcome back, ${matched.name}! Opening your employee profile...`);
+    AppRouter.refreshPermissions();
+    AppRouter.navigate("profile");
+  },
+  handleAdminLoginForm(e) {
+    e.preventDefault();
+    const email = document.getElementById("adminLoginEmail").value.trim().toLowerCase();
+    const password = document.getElementById("adminLoginPassword").value;
+    const alertBox = document.getElementById("adminAlertBox");
+
+    // Strictly validate HR Admin email format: <hr_name>.hr@<company_name>.com
+    const hrEmailRegex = /^[a-zA-Z0-9._%+-]+\.hr@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/i;
+    if (!hrEmailRegex.test(email)) {
+      if (alertBox) {
+        alertBox.innerHTML = `<strong>⚠️ Admin Access Denied:</strong><br>Admin credentials strictly require an authorized HR administrative email ending with <code>.hr@&lt;company&gt;.com</code> (e.g. <code>sarah.hr@company.com</code>).`;
+        alertBox.style.display = "block";
+      }
+      return;
+    }
+
+    // Strictly validate minimum 8 characters password
+    if (!password || password.length < 8) {
+      if (alertBox) {
+        alertBox.innerHTML = `<strong>⚠️ Password Policy Error:</strong><br>Admin security password must be a minimum of 8 characters in length.`;
+        alertBox.style.display = "block";
+      }
+      return;
+    }
+
+    if (alertBox) alertBox.style.display = "none";
+
+    // Extract name from email (e.g., sarah.hr@company.com -> Sarah)
+    const rawName = email.split(".hr@")[0].replace(/[._]/g, " ");
+    const adminName = rawName.charAt(0).toUpperCase() + rawName.slice(1);
+
+    const users = DB.get(StorageKeys.USERS);
+    let adminUser = users.find(u => u.email.toLowerCase() === email);
+    if (!adminUser) {
+      adminUser = {
+        id: "admin-" + Date.now(),
+        name: `${adminName} (HR Admin)`,
+        email: email,
+        role: "super_admin",
+        dept: "HR & People Operations",
+        status: "Active",
+        lastActive: "Just now"
+      };
+      users.push(adminUser);
+      DB.set(StorageKeys.USERS, users);
+    } else {
+      adminUser.role = "super_admin";
+    }
+
+    DB.pushAudit(`OSS Admin authenticated via https://ipaddress/admin.login for ${adminUser.name} (${email})`, adminUser.name);
+    this.setCurrentUser(adminUser);
+    GlobalApp.showToast(`🛡️ Admin console unlocked! Welcome, ${adminUser.name}.`);
+    AppRouter.refreshPermissions();
     AppRouter.navigate("main-dashboard");
   },
   handleRegisterForm(e) {
@@ -426,7 +521,7 @@ const AuthSystem = {
       joiningDate: new Date().toISOString().split("T")[0],
       shift,
       floor: "Floor 2",
-      progress: 10,
+      progress: 15,
       status: "In Progress"
     });
     DB.set(StorageKeys.CANDIDATES, candidates);
@@ -434,13 +529,29 @@ const AuthSystem = {
     DB.pushAudit(`Registered new employee account: ${name} (${empId})`, name);
     this.setCurrentUser(newUser);
     GlobalApp.showToast(`Account created successfully! Welcome ${name}.`);
-    AppRouter.navigate("employee-dashboard");
+    AppRouter.refreshPermissions();
+    AppRouter.navigate("profile");
   },
   showLoginTab(tab) {
-    document.getElementById("tabLoginBtn").classList.toggle("active", tab === "signin");
-    document.getElementById("tabRegisterBtn").classList.toggle("active", tab === "register");
-    document.getElementById("loginForm").style.display = tab === "signin" ? "block" : "none";
-    document.getElementById("registerForm").style.display = tab === "register" ? "block" : "none";
+    const isSignIn = tab === "signin";
+    const isReg = tab === "register";
+    const isAdmin = tab === "admin";
+
+    const tabLoginBtn = document.getElementById("tabLoginBtn");
+    const tabRegBtn = document.getElementById("tabRegisterBtn");
+    const tabAdminBtn = document.getElementById("tabAdminBtn");
+
+    if (tabLoginBtn) tabLoginBtn.classList.toggle("active", isSignIn);
+    if (tabRegBtn) tabRegBtn.classList.toggle("active", isReg);
+    if (tabAdminBtn) tabAdminBtn.classList.toggle("active", isAdmin);
+
+    const loginForm = document.getElementById("loginForm");
+    const regForm = document.getElementById("registerForm");
+    const adminForm = document.getElementById("adminLoginForm");
+
+    if (loginForm) loginForm.style.display = isSignIn ? "block" : "none";
+    if (regForm) regForm.style.display = isReg ? "block" : "none";
+    if (adminForm) adminForm.style.display = isAdmin ? "block" : "none";
   },
   openForgotPassword() {
     alert("Password reset instructions sent to your registered official email address. You may also contact Floor 3 IT Support.");
@@ -459,19 +570,60 @@ const AuthSystem = {
     const user = this.getCurrentUser();
     if (!user) return;
 
-    // Header role switcher select sync
-    const select = document.getElementById("roleSwitcherSelect");
-    if (select) select.value = user.role;
+    const roleNameMap = {
+      super_admin: "Super Admin",
+      hr_admin: "HR Admin",
+      employee: "Employee",
+      manager: "Manager",
+      it_admin: "IT Admin",
+      finance: "Finance/Payroll"
+    };
+    const roleTitle = roleNameMap[user.role] || user.role.toUpperCase();
 
-    // Sidebar labels
+    // 1. Header Role Switcher Select: Dynamically reflect current logged-in user's name
+    const select = document.getElementById("roleSwitcherSelect");
+    if (select) {
+      select.innerHTML = `
+        <option value="${user.role}">${roleTitle} (${user.name})</option>
+        <option value="super_admin">Super Admin (Dr. Evelyn Vance)</option>
+        <option value="hr_admin">HR Admin (Sarah Jenkins)</option>
+        <option value="employee">Employee (Alex Mercer)</option>
+        <option value="manager">Manager (David Kumar)</option>
+        <option value="it_admin">IT Admin (Marcus Vance)</option>
+        <option value="finance">Finance/Payroll (Rachel Adams)</option>
+      `;
+      select.value = user.role;
+    }
+
+    // 2. Header user pill
+    const headerUserName = document.getElementById("headerUserName");
+    const headerAvatar = document.getElementById("headerAvatar");
+    if (headerUserName) headerUserName.textContent = user.name;
+    if (headerAvatar) {
+      if (user.photo) {
+        headerAvatar.innerHTML = `<img src="${user.photo}" alt="${user.name}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
+      } else {
+        headerAvatar.innerHTML = "";
+        headerAvatar.textContent = user.name.split(" ").map(w => w[0]).slice(0, 2).join("").toUpperCase();
+      }
+    }
+
+    // 3. Sidebar labels & avatar (Image 1)
     const nameEl = document.getElementById("sidebarUserName");
     const roleEl = document.getElementById("sidebarUserRole");
     const avatarEl = document.getElementById("sidebarAvatar");
     if (nameEl) nameEl.textContent = user.name;
-    if (roleEl) roleEl.textContent = user.role.replace("_", " ").toUpperCase();
-    if (avatarEl) avatarEl.textContent = user.name.split(" ").map(w => w[0]).slice(0, 2).join("");
+    if (roleEl) roleEl.textContent = roleTitle.toUpperCase();
+    if (avatarEl) {
+      if (user.photo) {
+        avatarEl.innerHTML = `<img src="${user.photo}" alt="${user.name}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
+      } else {
+        avatarEl.innerHTML = "";
+        avatarEl.textContent = user.name.split(" ").map(w => w[0]).slice(0, 2).join("").toUpperCase();
+      }
+    }
 
-    // Update Employee Hero welcome banner if applicable
+    // 4. Update Employee Hero welcome banner if applicable
     const heroName = document.getElementById("empHeroName");
     if (heroName) heroName.textContent = `Welcome to the Team, ${user.name}! 👋`;
   }
@@ -675,54 +827,349 @@ const EmployeeDashboardModule = {
 const ProfileModule = {
   currentTab: "personal",
   load() {
+    const user = AuthSystem.getCurrentUser();
     const candidates = DB.get(StorageKeys.CANDIDATES);
-    const candidate = candidates[0]; // Active candidate profile (Alex Mercer)
 
-    document.getElementById("profFirstName").value = candidate.name.split(" ")[0] || "Alex";
-    document.getElementById("profLastName").value = candidate.name.split(" ")[1] || "Mercer";
-    document.getElementById("profEmail").value = candidate.email || "alex.mercer@company.com";
-    document.getElementById("profPhone").value = candidate.phone || "+91 98765 43210";
-    document.getElementById("profDob").value = candidate.dob || "1995-04-12";
-    document.getElementById("profBloodGroup").value = candidate.bloodGroup || "O+";
-    document.getElementById("profAddress").value = candidate.address || "42 Tech Boulevard, Silicon District";
+    // Match candidate by email, empId, or name
+    let c = candidates.find(item => 
+      (user.email && item.email && item.email.toLowerCase() === user.email.toLowerCase()) ||
+      (user.empId && item.id && item.id.toLowerCase() === user.empId.toLowerCase()) ||
+      (item.name && item.name.toLowerCase() === user.name.toLowerCase())
+    );
 
-    document.getElementById("profEmergName").value = candidate.emergName || "Eleanor Mercer";
-    document.getElementById("profEmergRel").value = candidate.emergRel || "Spouse";
-    document.getElementById("profEmergPhone").value = candidate.emergPhone || "+91 98765 43299";
+    if (!c) {
+      c = {
+        id: user.empId || "EMP-" + Math.floor(1000 + Math.random() * 9000),
+        name: user.name,
+        email: user.email,
+        role: user.role === "super_admin" || user.role === "hr_admin" ? "HR Administrator" : "Associate Engineer",
+        dept: user.dept || "Software Development",
+        manager: "David Kumar",
+        joiningDate: new Date().toISOString().split("T")[0],
+        shift: "First Shift (8:50 AM - 5:50 PM)",
+        floor: "Floor 3 (Bay 3B)",
+        progress: 35,
+        status: "In Progress",
+        phone: "+91 98765 00000",
+        photo: user.photo || null
+      };
+      candidates.push(c);
+      DB.set(StorageKeys.CANDIDATES, candidates);
+    }
 
-    document.getElementById("profEduDegree").value = candidate.degree || "B.Tech Computer Science";
-    document.getElementById("profEduUniv").value = candidate.university || "National Institute of Tech";
-    document.getElementById("profPrevCompany").value = candidate.prevCompany || "CloudScale Systems";
-    document.getElementById("profExperience").value = candidate.expYears || "4.5";
+    // Set overview card headers
+    const nameParts = (c.name || user.name || "Employee User").split(" ");
+    const firstName = nameParts[0] || "";
+    const lastName = nameParts.slice(1).join(" ") || "";
 
-    document.getElementById("profBankName").value = candidate.bankName || "HDFC Bank";
-    document.getElementById("profAccountNum").value = candidate.accountNum || "501002348921";
-    document.getElementById("profIfsc").value = candidate.ifsc || "HDFC0001042";
-    document.getElementById("profPan").value = candidate.pan || "ALXPM1942K";
+    const profDisplayName = document.getElementById("profDisplayName");
+    const profDisplayRole = document.getElementById("profDisplayRole");
+    const profDisplayEmpId = document.getElementById("profDisplayEmpId");
+    const profDisplayDept = document.getElementById("profDisplayDept");
 
-    document.getElementById("profDept").value = candidate.dept || "Software Development";
-    document.getElementById("profRole").value = candidate.role || "Senior Software Engineer";
-    document.getElementById("profManager").value = candidate.manager || "David Kumar";
-    document.getElementById("profShift").value = candidate.shift || "First Shift (8:50 AM - 5:50 PM)";
-    document.getElementById("profJoiningDate").value = candidate.joiningDate || "2026-10-15";
-    document.getElementById("profFloor").value = candidate.floor || "Floor 3 (Bay 3B)";
+    if (profDisplayName) profDisplayName.textContent = c.name;
+    if (profDisplayRole) profDisplayRole.textContent = c.role;
+    if (profDisplayEmpId) profDisplayEmpId.textContent = c.id;
+    if (profDisplayDept) profDisplayDept.textContent = c.dept;
+
+    // Pre-fill form inputs
+    const setVal = (id, val) => {
+      const el = document.getElementById(id);
+      if (el) el.value = val || "";
+    };
+
+    setVal("profFirstName", firstName);
+    setVal("profLastName", lastName);
+    setVal("profEmail", c.email || user.email);
+    setVal("profPhone", c.phone || "+91 98765 43210");
+    setVal("profDob", c.dob || "1995-04-12");
+    setVal("profBloodGroup", c.bloodGroup || "O+");
+    setVal("profAddress", c.address || "42 Tech Boulevard, Silicon District");
+
+    setVal("profEmergName", c.emergName || "Eleanor Mercer");
+    setVal("profEmergRel", c.emergRel || "Spouse");
+    setVal("profEmergPhone", c.emergPhone || "+91 98765 43299");
+    setVal("profEmergAltPhone", c.emergAltPhone || "");
+
+    setVal("profEduDegree", c.degree || "B.Tech Computer Science");
+    setVal("profEduUniv", c.university || "National Institute of Technology");
+    setVal("profPrevCompany", c.prevCompany || "CloudScale Systems");
+    setVal("profExperience", c.expYears || "4.5");
+
+    setVal("profBankName", c.bankName || "HDFC Bank");
+    setVal("profAccountNum", c.accountNum || "501002348921");
+    setVal("profIfsc", c.ifsc || "HDFC0001042");
+    setVal("profPan", c.pan || "ALXPM1942K");
+
+    setVal("profDept", c.dept || "Software Development");
+    setVal("profRole", c.role || "Senior Software Engineer");
+    setVal("profManager", c.manager || "David Kumar");
+    setVal("profShift", c.shift || "First Shift (8:50 AM - 5:50 PM)");
+    setVal("profJoiningDate", c.joiningDate || "2026-10-15");
+    setVal("profFloor", c.floor || "Floor 3 (Bay 3B)");
+
+    // Refresh Avatar and Gauge
+    this.updateAvatarDisplays(user);
+    this.updateCompletionGauge();
+    this.switchTab(this.currentTab || "personal");
+  },
+  updateAvatarDisplays(user) {
+    const previewEl = document.getElementById("profAvatarPreview");
+    const removeBtn = document.getElementById("profRemovePhotoBtn");
+    const photoStatus = document.getElementById("profPhotoStatus");
+
+    if (previewEl) {
+      if (user.photo) {
+        previewEl.innerHTML = `<img src="${user.photo}" alt="${user.name}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
+        if (removeBtn) removeBtn.style.display = "inline-block";
+        if (photoStatus) photoStatus.innerHTML = `<span class="badge badge-success">✓ Profile Photo Verified</span>`;
+      } else {
+        previewEl.innerHTML = "";
+        previewEl.textContent = (user.name || "AM").split(" ").map(w => w[0]).slice(0, 2).join("").toUpperCase();
+        if (removeBtn) removeBtn.style.display = "none";
+        if (photoStatus) photoStatus.innerHTML = `<span style="color:var(--warning);font-size:12px;">⚠️ Photo Required for RFID Badge</span>`;
+      }
+    }
+
+    AuthSystem.applySessionUI();
+  },
+  handlePhotoUpload(input) {
+    if (input.files && input.files[0]) {
+      const file = input.files[0];
+      if (file.size > 5 * 1024 * 1024) {
+        alert("Photo file size exceeds 5MB limit. Please select a smaller photo.");
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const dataUrl = e.target.result;
+        const user = AuthSystem.getCurrentUser();
+        user.photo = dataUrl;
+        AuthSystem.setCurrentUser(user);
+
+        // Update in Candidates
+        const candidates = DB.get(StorageKeys.CANDIDATES);
+        const c = candidates.find(item => 
+          (user.email && item.email && item.email.toLowerCase() === user.email.toLowerCase()) ||
+          (user.empId && item.id && item.id.toLowerCase() === user.empId.toLowerCase()) ||
+          (item.name && item.name.toLowerCase() === user.name.toLowerCase())
+        );
+        if (c) {
+          c.photo = dataUrl;
+          DB.set(StorageKeys.CANDIDATES, candidates);
+        }
+
+        // Update in USERS
+        const users = DB.get(StorageKeys.USERS);
+        const u = users.find(item => item.id === user.id || item.email === user.email);
+        if (u) {
+          u.photo = dataUrl;
+          DB.set(StorageKeys.USERS, users);
+        }
+
+        DB.pushAudit(`Uploaded new profile photo for ${user.name}`, user.name);
+        GlobalApp.showToast("📷 Profile photo updated successfully!");
+        this.updateAvatarDisplays(user);
+        this.updateCompletionGauge();
+      };
+      reader.readAsDataURL(file);
+    }
+  },
+  removePhoto() {
+    const user = AuthSystem.getCurrentUser();
+    delete user.photo;
+    AuthSystem.setCurrentUser(user);
+
+    const candidates = DB.get(StorageKeys.CANDIDATES);
+    const c = candidates.find(item => 
+      (user.email && item.email && item.email.toLowerCase() === user.email.toLowerCase()) ||
+      (user.empId && item.id && item.id.toLowerCase() === user.empId.toLowerCase()) ||
+      (item.name && item.name.toLowerCase() === user.name.toLowerCase())
+    );
+    if (c) {
+      delete c.photo;
+      DB.set(StorageKeys.CANDIDATES, candidates);
+    }
+
+    const users = DB.get(StorageKeys.USERS);
+    const u = users.find(item => item.id === user.id || item.email === user.email);
+    if (u) {
+      delete u.photo;
+      DB.set(StorageKeys.USERS, users);
+    }
+
+    GlobalApp.showToast("Profile photo removed.");
+    this.updateAvatarDisplays(user);
+    this.updateCompletionGauge();
+  },
+  updateCompletionGauge() {
+    const user = AuthSystem.getCurrentUser();
+    const reqFields = [
+      document.getElementById("profFirstName")?.value,
+      document.getElementById("profLastName")?.value,
+      document.getElementById("profEmail")?.value,
+      document.getElementById("profPhone")?.value,
+      document.getElementById("profDob")?.value,
+      document.getElementById("profAddress")?.value,
+      document.getElementById("profEmergName")?.value,
+      document.getElementById("profEmergRel")?.value,
+      document.getElementById("profEmergPhone")?.value,
+      document.getElementById("profEduDegree")?.value,
+      document.getElementById("profEduUniv")?.value,
+      document.getElementById("profBankName")?.value,
+      document.getElementById("profAccountNum")?.value,
+      document.getElementById("profIfsc")?.value,
+      document.getElementById("profPan")?.value,
+      user.photo
+    ];
+
+    const filledCount = reqFields.filter(f => !!f && String(f).trim().length > 0).length;
+    const totalReq = reqFields.length;
+    const percent = Math.round((filledCount / totalReq) * 100);
+
+    const percentEl = document.getElementById("profCompletionPercent");
+    const barEl = document.getElementById("profCompletionBar");
+    const summaryEl = document.getElementById("profRequiredSummary");
+
+    if (percentEl) percentEl.textContent = `${percent}%`;
+    if (barEl) barEl.style.width = `${percent}%`;
+    if (summaryEl) {
+      summaryEl.textContent = percent === 100 
+        ? "✓ All required fields and profile photo completed!" 
+        : `${filledCount} of ${totalReq} required onboarding profile items completed.`;
+    }
   },
   switchTab(tabId) {
     this.currentTab = tabId;
-    document.querySelectorAll(".tab-pane").forEach(p => p.classList.remove("active"));
-    document.querySelectorAll("#page-profile .tab-btn").forEach(b => b.classList.remove("active"));
+    const tabBtns = document.querySelectorAll("#page-profile .tab-btn");
+    tabBtns.forEach(b => b.classList.remove("active"));
 
-    const target = document.getElementById(`profileTab${tabId.charAt(0).toUpperCase() + tabId.slice(1)}`);
-    if (target) target.classList.add("active");
+    if (tabId === "all") {
+      document.querySelectorAll(".tab-pane").forEach(p => p.classList.add("active"));
+      const allBtn = document.getElementById("tabProfAllBtn");
+      if (allBtn) allBtn.classList.add("active");
+    } else {
+      document.querySelectorAll(".tab-pane").forEach(p => p.classList.remove("active"));
+      const target = document.getElementById(`profileTab${tabId.charAt(0).toUpperCase() + tabId.slice(1)}`);
+      if (target) target.classList.add("active");
+      const activeBtn = document.getElementById(`tabProf${tabId.charAt(0).toUpperCase() + tabId.slice(1)}Btn`);
+      if (activeBtn) activeBtn.classList.add("active");
+    }
   },
   saveDraft() {
-    GlobalApp.showToast("Profile draft saved to local memory.");
-    DB.pushAudit("Saved employee information form draft", "Alex Mercer");
+    this.saveDataLocally(false);
+    GlobalApp.showToast("💾 Profile draft saved to local memory.");
   },
   saveAndSubmit() {
-    GlobalApp.showToast("✅ Profile submitted successfully for HR verification.");
-    DB.pushAudit("Submitted complete employee onboarding information profile", "Alex Mercer");
-    DB.pushNotification("Profile Submitted", "Your updated employee profile has been dispatched to HR.", "document");
+    this.saveDataLocally(true);
+  },
+  saveDataLocally(isSubmit) {
+    const user = AuthSystem.getCurrentUser();
+    const firstName = document.getElementById("profFirstName")?.value.trim() || "";
+    const lastName = document.getElementById("profLastName")?.value.trim() || "";
+    const email = document.getElementById("profEmail")?.value.trim() || "";
+    const phone = document.getElementById("profPhone")?.value.trim() || "";
+    const dob = document.getElementById("profDob")?.value || "";
+    const bloodGroup = document.getElementById("profBloodGroup")?.value || "O+";
+    const address = document.getElementById("profAddress")?.value.trim() || "";
+    const emergName = document.getElementById("profEmergName")?.value.trim() || "";
+    const emergRel = document.getElementById("profEmergRel")?.value.trim() || "";
+    const emergPhone = document.getElementById("profEmergPhone")?.value.trim() || "";
+    const emergAltPhone = document.getElementById("profEmergAltPhone")?.value.trim() || "";
+    const degree = document.getElementById("profEduDegree")?.value.trim() || "";
+    const univ = document.getElementById("profEduUniv")?.value.trim() || "";
+    const prevCompany = document.getElementById("profPrevCompany")?.value.trim() || "";
+    const expYears = document.getElementById("profExperience")?.value.trim() || "";
+    const bankName = document.getElementById("profBankName")?.value.trim() || "";
+    const accountNum = document.getElementById("profAccountNum")?.value.trim() || "";
+    const ifsc = document.getElementById("profIfsc")?.value.trim() || "";
+    const pan = document.getElementById("profPan")?.value.trim() || "";
+
+    if (isSubmit) {
+      const missing = [];
+      if (!firstName) missing.push("First Name");
+      if (!lastName) missing.push("Last Name");
+      if (!email) missing.push("Email");
+      if (!phone) missing.push("Phone Number");
+      if (!dob) missing.push("Date of Birth");
+      if (!address) missing.push("Residential Address");
+      if (!emergName) missing.push("Emergency Contact Name");
+      if (!emergRel) missing.push("Emergency Relationship");
+      if (!emergPhone) missing.push("Emergency Phone");
+      if (!degree) missing.push("Educational Degree");
+      if (!bankName) missing.push("Bank Name");
+      if (!accountNum) missing.push("Account Number");
+      if (!ifsc) missing.push("IFSC Code");
+      if (!pan) missing.push("PAN Card");
+      if (!user.photo) missing.push("Profile Photo (Required for RFID Badge)");
+
+      if (missing.length > 0) {
+        alert("Please complete the following required fields before official submission:\n• " + missing.join("\n• "));
+        return;
+      }
+    }
+
+    const fullName = `${firstName} ${lastName}`.trim() || user.name;
+    user.name = fullName;
+    user.email = email || user.email;
+    AuthSystem.setCurrentUser(user);
+
+    // Update in Candidates
+    const candidates = DB.get(StorageKeys.CANDIDATES);
+    let c = candidates.find(item => 
+      (user.email && item.email && item.email.toLowerCase() === user.email.toLowerCase()) ||
+      (user.empId && item.id && item.id.toLowerCase() === user.empId.toLowerCase()) ||
+      (item.name && item.name.toLowerCase() === user.name.toLowerCase())
+    );
+    if (!c) {
+      c = { id: user.empId || "EMP-" + Math.floor(1000 + Math.random() * 9000), name: fullName, email: user.email };
+      candidates.push(c);
+    }
+    c.name = fullName;
+    c.email = email;
+    c.phone = phone;
+    c.dob = dob;
+    c.bloodGroup = bloodGroup;
+    c.address = address;
+    c.emergName = emergName;
+    c.emergRel = emergRel;
+    c.emergPhone = emergPhone;
+    c.emergAltPhone = emergAltPhone;
+    c.degree = degree;
+    c.university = univ;
+    c.prevCompany = prevCompany;
+    c.expYears = expYears;
+    c.bankName = bankName;
+    c.accountNum = accountNum;
+    c.ifsc = ifsc;
+    c.pan = pan;
+    c.photo = user.photo;
+    if (isSubmit) {
+      c.progress = Math.max(c.progress || 0, 75);
+      c.status = "In Progress";
+    }
+    DB.set(StorageKeys.CANDIDATES, candidates);
+
+    // Update in Users
+    const users = DB.get(StorageKeys.USERS);
+    const u = users.find(item => item.id === user.id || item.email === user.email);
+    if (u) {
+      u.name = fullName;
+      u.email = email;
+      u.photo = user.photo;
+      DB.set(StorageKeys.USERS, users);
+    }
+
+    this.updateAvatarDisplays(user);
+    this.updateCompletionGauge();
+
+    if (isSubmit) {
+      DB.pushAudit(`Submitted complete employee onboarding profile for ${fullName}`, fullName);
+      DB.pushNotification("Profile Submitted", "Your updated onboarding profile and photo have been dispatched for HR verification.", "document");
+      GlobalApp.showToast("✅ Profile submitted successfully for HR verification!");
+    } else {
+      DB.pushAudit(`Saved employee information draft for ${fullName}`, fullName);
+    }
   }
 };
 
@@ -2205,13 +2652,17 @@ const GlobalApp = {
     AuthSystem.applySessionUI();
     AppRouter.refreshPermissions();
 
-    // Check URL parameters (e.g. ?menu=admin or ?page=training)
+    // Check URL parameters (e.g. ?menu=admin, /admin.login, #admin.login, ?page=admin-login)
     const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get("menu") === "admin" || localStorage.getItem("hr_admin_session")) {
-      AuthSystem.switchRoleDemo("super_admin");
+    const fullHref = (window.location.href || "").toLowerCase();
+
+    if (fullHref.includes("admin.login") || urlParams.get("page") === "admin-login" || urlParams.get("menu") === "admin") {
+      AppRouter.navigate("login");
+      AuthSystem.showLoginTab("admin");
+    } else {
+      const targetPage = urlParams.get("page") || "main-dashboard";
+      AppRouter.navigate(targetPage);
     }
-    const targetPage = urlParams.get("page") || (urlParams.get("menu") === "admin" ? "main-dashboard" : "main-dashboard");
-    AppRouter.navigate(targetPage);
 
     // Sidebar toggle listeners
     const openBtn = document.getElementById("sidebarOpenBtn");

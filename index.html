@@ -170,16 +170,22 @@
       </div>
 
       <div class="header-right">
+        <!-- Logged-in User Profile Pill (Header) -->
+        <div class="header-user-pill" id="headerUserPill" style="display:flex;align-items:center;gap:8px;padding:4px 12px;background:var(--bg-subtle);border-radius:var(--radius-full);border:1px solid var(--border-color);cursor:pointer;" onclick="AppRouter.navigate('profile')" title="View Your Profile">
+          <div class="user-avatar-circle" id="headerAvatar" style="width:26px;height:26px;font-size:11px;overflow:hidden;">EM</div>
+          <span id="headerUserName" style="font-size:12.5px;font-weight:600;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Alex Mercer</span>
+        </div>
+
         <!-- Live Role Switcher -->
-        <div class="role-switcher-box" title="Quickly preview portal as different enterprise roles">
-          <span>Active Role:</span>
+        <div class="role-switcher-box" title="Active Logged-in Role">
+          <span style="font-size:12px;color:var(--text-muted);font-weight:600;">Active Role:</span>
           <select id="roleSwitcherSelect" class="role-switcher-select" onchange="AuthSystem.switchRoleDemo(this.value)">
-            <option value="super_admin">Super Admin (Dr. Evelyn)</option>
-            <option value="hr_admin">HR Admin (Sarah Jenkins)</option>
-            <option value="employee">New Employee (Alex Mercer)</option>
-            <option value="manager">Manager (David Kumar)</option>
-            <option value="it_admin">IT Admin (Marcus Vance)</option>
-            <option value="finance">Finance/Payroll (Rachel Adams)</option>
+            <option value="super_admin">Super Admin</option>
+            <option value="hr_admin">HR Admin</option>
+            <option value="employee">Employee</option>
+            <option value="manager">Manager</option>
+            <option value="it_admin">IT Admin</option>
+            <option value="finance">Finance/Payroll</option>
           </select>
         </div>
 
@@ -223,8 +229,9 @@
 
             <!-- Tab switcher -->
             <div class="tab-nav" style="justify-content:center;">
-              <button type="button" class="tab-btn active" id="tabLoginBtn" onclick="AuthSystem.showLoginTab('signin')">Sign In</button>
+              <button type="button" class="tab-btn active" id="tabLoginBtn" onclick="AuthSystem.showLoginTab('signin')">Employee Sign In</button>
               <button type="button" class="tab-btn" id="tabRegisterBtn" onclick="AuthSystem.showLoginTab('register')">Register Account</button>
+              <button type="button" class="tab-btn" id="tabAdminBtn" onclick="AuthSystem.showLoginTab('admin')">🛡️ Admin Portal (/admin.login)</button>
             </div>
 
             <div id="loginAlertBox" style="display:none;" class="badge badge-danger" style="margin-bottom:14px;width:100%;padding:10px;"></div>
@@ -233,7 +240,7 @@
             <form id="loginForm" onsubmit="AuthSystem.handleLoginForm(event)">
               <div class="form-group">
                 <label class="form-label">Email or Employee ID</label>
-                <input type="text" class="form-control" id="loginId" placeholder="e.g. admin@company.com or EMP-1042" required>
+                <input type="text" class="form-control" id="loginId" placeholder="e.g. alex.mercer@company.com or EMP-1042" required>
               </div>
               <div class="form-group">
                 <label class="form-label">Password</label>
@@ -246,7 +253,7 @@
                 <a href="javascript:void(0)" onclick="AuthSystem.openForgotPassword()">Forgot Password?</a>
               </div>
               <button type="submit" class="btn btn-primary" style="width:100%;margin-bottom:16px;">
-                <span>🔓 Authenticate &amp; Launch Portal</span>
+                <span>🔓 Authenticate &amp; Open Employee Profile</span>
               </button>
             </form>
 
@@ -302,35 +309,35 @@
               </button>
             </form>
 
-            <div style="text-align:center;margin-top:14px;border-top:1px solid var(--border-color);padding-top:16px;">
-              <span class="text-muted" style="font-size:12px;font-weight:700;text-transform:uppercase;">Quick One-Click Demo Logins:</span>
-              <div class="demo-role-grid">
-                <button type="button" class="demo-role-btn" onclick="AuthSystem.loginAs('super_admin')">
-                  <strong>Dr. Evelyn Vance</strong>
-                  <span>Super Admin</span>
-                </button>
-                <button type="button" class="demo-role-btn" onclick="AuthSystem.loginAs('hr_admin')">
-                  <strong>Sarah Jenkins</strong>
-                  <span>HR Director</span>
-                </button>
-                <button type="button" class="demo-role-btn" onclick="AuthSystem.loginAs('employee')">
-                  <strong>Alex Mercer</strong>
-                  <span>New Engineer</span>
-                </button>
-                <button type="button" class="demo-role-btn" onclick="AuthSystem.loginAs('manager')">
-                  <strong>David Kumar</strong>
-                  <span>Engineering Manager</span>
-                </button>
-                <button type="button" class="demo-role-btn" onclick="AuthSystem.loginAs('it_admin')">
-                  <strong>Marcus Vance</strong>
-                  <span>IT Admin</span>
-                </button>
-                <button type="button" class="demo-role-btn" onclick="AuthSystem.loginAs('finance')">
-                  <strong>Rachel Adams</strong>
-                  <span>Finance &amp; Payroll</span>
-                </button>
+            <!-- Admin Portal Login Form (OSS HTTPS /admin.login) -->
+            <form id="adminLoginForm" style="display:none;" onsubmit="AuthSystem.handleAdminLoginForm(event)">
+              <div style="background:var(--bg-subtle);border-radius:var(--radius-md);padding:12px 14px;margin-bottom:16px;border:1px solid var(--border-color);display:flex;align-items:center;gap:12px;">
+                <span style="font-size:24px;">🛡️</span>
+                <div>
+                  <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;">OSS HTTPS Administrative Gateway</div>
+                  <div style="font-size:12.5px;font-weight:600;color:var(--primary);font-family:var(--font-mono);">https://ipaddress/admin.login</div>
+                </div>
               </div>
-            </div>
+
+              <div id="adminAlertBox" style="display:none;margin-bottom:14px;padding:10px 14px;font-size:12.5px;text-align:left;line-height:1.4;" class="badge badge-danger"></div>
+
+              <div class="form-group">
+                <label class="form-label">Authorized HR Admin Email <span class="required">*</span></label>
+                <input type="email" class="form-control" id="adminLoginEmail" placeholder="sarah.hr@company.com" required>
+                <span style="font-size:11.5px;color:var(--text-muted);margin-top:3px;display:block;">Required format: <code>&lt;hr_name&gt;.hr@&lt;company_name&gt;.com</code></span>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Admin Security Password <span class="required">*</span></label>
+                <input type="password" class="form-control" id="adminLoginPassword" minlength="8" placeholder="Minimum 8 characters" required>
+                <span style="font-size:11.5px;color:var(--text-muted);margin-top:3px;display:block;">Minimum 8 characters required</span>
+              </div>
+              <button type="submit" class="btn btn-primary" style="width:100%;margin-bottom:12px;">
+                <span>🔐 Authenticate HR Admin Console</span>
+              </button>
+              <div style="text-align:center;font-size:12px;color:var(--text-muted);">
+                Dedicated Secure Endpoint: <code>https://&lt;ipaddress&gt;/admin.login</code>
+              </div>
+            </form>
 
           </div>
         </div>
@@ -569,14 +576,63 @@
           </div>
         </div>
 
+        <!-- Profile Overview & Photo Upload Card -->
+        <div class="card" style="margin-bottom:20px;padding:22px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:20px;">
+            <div style="display:flex;align-items:center;gap:20px;">
+              <!-- Profile Photo Circle Preview with Upload -->
+              <div style="position:relative;">
+                <div class="user-avatar-circle" id="profAvatarPreview" style="width:96px;height:96px;font-size:32px;border:3px solid var(--primary);overflow:hidden;box-shadow:var(--shadow-md);">
+                  AM
+                </div>
+              </div>
+              <div>
+                <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+                  <h2 style="font-size:22px;margin:0;" id="profDisplayName">Alex Mercer</h2>
+                  <span class="badge badge-primary" id="profDisplayRole">Senior Software Engineer</span>
+                </div>
+                <div style="font-size:13px;color:var(--text-muted);margin:4px 0 10px;" id="profDisplayMeta">
+                  Emp ID: <code id="profDisplayEmpId">EMP-1042</code> • <span id="profDisplayDept">Software Development</span>
+                </div>
+                <!-- Photo Upload Controls -->
+                <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+                  <input type="file" id="profPhotoFileInput" accept="image/*" style="display:none;" onchange="ProfileModule.handlePhotoUpload(this)">
+                  <button type="button" class="btn btn-primary btn-sm" onclick="document.getElementById('profPhotoFileInput').click()">
+                    📷 Upload Profile Photo
+                  </button>
+                  <button type="button" class="btn btn-secondary btn-sm" id="profRemovePhotoBtn" onclick="ProfileModule.removePhoto()" style="display:none;">
+                    Remove Photo
+                  </button>
+                  <span id="profPhotoStatus" style="font-size:12px;color:var(--text-muted);">Required for official RFID Employee ID Card</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Required Fields Status Tracker -->
+            <div style="background:var(--bg-subtle);border-radius:var(--radius-md);padding:14px 18px;min-width:260px;">
+              <div style="display:flex;justify-content:space-between;font-size:12px;font-weight:700;margin-bottom:6px;">
+                <span>REQUIRED FIELDS COMPLETION</span>
+                <span id="profCompletionPercent" style="color:var(--primary);">85%</span>
+              </div>
+              <div class="progress-bar-container" style="height:8px;margin-bottom:8px;">
+                <div class="progress-bar-fill" id="profCompletionBar" style="width:85%;"></div>
+              </div>
+              <div style="font-size:11.5px;color:var(--text-muted);" id="profRequiredSummary">
+                All required fields must be completed for official HR verification.
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- Profile Tabs -->
         <div class="card">
           <div class="tab-nav">
-            <button class="tab-btn active" onclick="ProfileModule.switchTab('personal')">1. Personal &amp; Contact</button>
-            <button class="tab-btn" onclick="ProfileModule.switchTab('emergency')">2. Emergency Contacts</button>
-            <button class="tab-btn" onclick="ProfileModule.switchTab('education')">3. Education &amp; Experience</button>
-            <button class="tab-btn" onclick="ProfileModule.switchTab('bank')">4. Bank &amp; Payroll</button>
-            <button class="tab-btn" onclick="ProfileModule.switchTab('assignment')">5. Organization Assignment</button>
+            <button type="button" class="tab-btn active" id="tabProfPersonalBtn" onclick="ProfileModule.switchTab('personal')">1. Personal &amp; Contact</button>
+            <button type="button" class="tab-btn" id="tabProfEmergencyBtn" onclick="ProfileModule.switchTab('emergency')">2. Emergency Contacts</button>
+            <button type="button" class="tab-btn" id="tabProfEducationBtn" onclick="ProfileModule.switchTab('education')">3. Education &amp; Experience</button>
+            <button type="button" class="tab-btn" id="tabProfBankBtn" onclick="ProfileModule.switchTab('bank')">4. Bank &amp; Payroll</button>
+            <button type="button" class="tab-btn" id="tabProfAssignmentBtn" onclick="ProfileModule.switchTab('assignment')">5. Organization Assignment</button>
+            <button type="button" class="tab-btn" id="tabProfAllBtn" onclick="ProfileModule.switchTab('all')" style="margin-left:auto;background:var(--primary-light);color:var(--primary);font-weight:700;">📋 Display All Required Fields</button>
           </div>
 
           <form id="profileMainForm">
