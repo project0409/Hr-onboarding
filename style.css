@@ -1821,3 +1821,122 @@ canvas.signature-canvas {
     grid-template-columns: 1fr;
   }
 }
+
+/* =========================================================================
+   GLOBAL SMART SEARCH RESULTS DROPDOWN
+   ========================================================================= */
+
+.header-search {
+  position: relative;
+}
+
+.header-search-results {
+  display: none;
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.22);
+  z-index: 9999;
+  overflow: hidden;
+  max-height: 360px;
+  overflow-y: auto;
+}
+
+.search-result-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  cursor: pointer;
+  transition: background 0.15s;
+  border-bottom: 1px solid var(--border-color);
+}
+.search-result-item:last-child { border-bottom: none; }
+.search-result-item:hover,
+.search-result-item.search-result-hover {
+  background: var(--primary-light);
+}
+
+.search-result-icon {
+  font-size: 18px;
+  width: 28px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.search-result-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.search-result-label {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.search-result-sub {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 1px;
+}
+
+.search-result-arrow {
+  font-size: 14px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.search-result-empty {
+  padding: 14px 18px;
+  font-size: 13px;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+body.dark-mode .header-search-results {
+  background: #111827;
+  border-color: #1e2d45;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+}
+
+body.dark-mode .search-result-item:hover,
+body.dark-mode .search-result-item.search-result-hover {
+  background: rgba(99,102,241,0.12);
+}
+
+/* =========================================================================
+   ACTIVE ROLE BADGE IN HEADER
+   ========================================================================= */
+
+#activeUserRoleBadge {
+  background: var(--primary-light);
+  color: var(--primary);
+  border-radius: var(--radius-sm);
+  padding: 2px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+body.dark-mode #activeUserRoleBadge {
+  background: rgba(99,102,241,0.18);
+  color: #a5b4fc;
+}
+
+/* =========================================================================
+   SIDEBAR FOOTER HOVER (profile shortcut)
+   ========================================================================= */
+.sidebar-footer:hover {
+  background: rgba(99,102,241,0.08);
+  border-radius: var(--radius-md);
+  transition: background 0.2s;
+}
+.sidebar-footer:hover .user-mini-name {
+  color: var(--primary);
+}

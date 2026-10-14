@@ -602,18 +602,14 @@ const AuthSystem = {
     };
     const roleTitle = roleNameMap[user.role] || user.role.toUpperCase();
 
-    // 1. Header Role Switcher Select: Dynamically reflect current logged-in user's name
+    // 1. Active Role Badge: Show logged-in user's actual role (not a dropdown of demo users)
+    const activeRoleBadge = document.getElementById("activeUserRoleBadge");
+    if (activeRoleBadge) {
+      activeRoleBadge.textContent = roleTitle;
+    }
+    // Keep hidden roleSwitcherSelect in sync (for any code that reads it)
     const select = document.getElementById("roleSwitcherSelect");
     if (select) {
-      select.innerHTML = `
-        <option value="${user.role}">${roleTitle} (${user.name})</option>
-        <option value="super_admin">Super Admin (Dr. Evelyn Vance)</option>
-        <option value="hr_admin">HR Admin (Sarah Jenkins)</option>
-        <option value="employee">Employee (Alex Mercer)</option>
-        <option value="manager">Manager (David Kumar)</option>
-        <option value="it_admin">IT Admin (Marcus Vance)</option>
-        <option value="finance">Finance/Payroll (Rachel Adams)</option>
-      `;
       select.value = user.role;
     }
 
@@ -2743,6 +2739,15 @@ const GlobalApp = {
 
     if (openBtn) openBtn.onclick = () => sidebar.classList.add("mobile-open");
     if (closeBtn) closeBtn.onclick = () => sidebar.classList.remove("mobile-open");
+
+    // Close search results when clicking outside
+    document.addEventListener("click", (e) => {
+      const searchBox = document.querySelector(".header-search");
+      const resultsBox = document.getElementById("globalSearchResults");
+      if (resultsBox && searchBox && !searchBox.contains(e.target)) {
+        resultsBox.style.display = "none";
+      }
+    });
   },
   toggleTheme() {
     const isDark = document.body.classList.toggle("dark-mode");
@@ -2784,16 +2789,150 @@ const GlobalApp = {
       setTimeout(() => toast.remove(), 300);
     }, 2800);
   },
+  // Legacy enter-key handler (kept for backward compat)
   handleSearch(e) {
     if (e.key === "Enter") {
       const q = e.target.value.trim();
-      if (!q) return;
-      AppRouter.navigate("directory");
-      const dirInput = document.getElementById("dirSearchInput");
-      if (dirInput) {
-        dirInput.value = q;
-        DirectoryModule.applyFilters();
+      if (q) this.navigateSearch(q);
+    }
+  },
+  // Smart search registry — all searchable modules and keywords
+  _searchIndex: [
+    { label: "Executive Dashboard",          icon: "📊", page: "main-dashboard",      keywords: ["dashboard","executive","overview","summary","kpi","analytics","home"] },
+    { label: "My Onboarding Hub",            icon: "🚀", page: "employee-dashboard",   keywords: ["onboarding","hub","my dashboard","employee","welcome","progress","journey"] },
+    { label: "My Profile & Forms",           icon: "👤", page: "profile",              keywords: ["profile","photo","personal","contact","bank","payroll","education","emergency","pan","ifsc","forms","info","account"] },
+    { label: "Employee Directory",           icon: "👥", page: "directory",            keywords: ["directory","employees","staff","search employee","team","org","people"] },
+    { label: "Document Verification",        icon: "📁", page: "documents",            keywords: ["documents","docs","files","upload","verify","verification","kyc","id proof"] },
+    { label: "Tasks & Milestones",           icon: "✅", page: "tasks",               keywords: ["tasks","milestones","todo","checklist","activities","pending","open"] },
+    { label: "Formalities & Approvals",      icon: "✍️", page: "formalities",          keywords: ["formalities","approvals","nda","policy","sign","agreement","offer letter","acknowledgment"] },
+    { label: "Policy & Training Center",     icon: "🎓", page: "training",            keywords: ["training","policy","handbook","courses","modules","learning","compliance","exam"] },
+    { label: "IT & Equipment Setup",         icon: "💻", page: "it-setup",            keywords: ["it","equipment","laptop","hardware","credentials","vpn","setup","devices","assets"] },
+    { label: "Notification Center",          icon: "🔔", page: "notifications",       keywords: ["notifications","alerts","updates","messages","bell","unread"] },
+    { label: "Reports & Analytics",          icon: "📈", page: "reports",             keywords: ["reports","analytics","metrics","charts","statistics","headcount","data","export"] },
+    { label: "User & Role Control",          icon: "🛡️", page: "users",              keywords: ["users","roles","access","permissions","admin","control","manage users"] },
+    { label: "Company Templates",            icon: "⚙️", page: "settings",            keywords: ["settings","templates","configuration","onboarding templates","company","workflow"] },
+    { label: "AI Onboarding Buddy",          icon: "🤖", page: null,                  keywords: ["ai","chat","buddy","assistant","help","ask","bot","voice"], action: () => AiChatModule.toggleMiniWidget(true) },
+  ],
+  handleSearchInput(query) {
+    const resultsBox = document.getElementById("globalSearchResults");
+    if (!resultsBox) return;
+    const q = (query || "").trim().toLowerCase();
+
+    if (!q) {
+      resultsBox.style.display = "none";
+      resultsBox.innerHTML = "";
+      return;
+    }
+
+    const matches = this._searchIndex.filter(item =>
+      item.label.toLowerCase().includes(q) ||
+      item.keywords.some(kw => kw.includes(q) || q.includes(kw))
+    );
+
+    if (!matches.length) {
+      resultsBox.innerHTML = `<div class="search-result-empty">No modules found for "<strong>${query}</strong>"</div>`;
+      resultsBox.style.display = "block";
+      return;
+    }
+
+    resultsBox.innerHTML = matches.map((item, idx) => `
+      <div class="search-result-item" data-idx="${idx}" onclick="GlobalApp.selectSearchResult(${idx}, '${query.replace(/'/g,"\\'")}')">
+        <span class="search-result-icon">${item.icon}</span>
+        <div class="search-result-info">
+          <div class="search-result-label">${item.label}</div>
+          <div class="search-result-sub">${item.page ? `Navigate to: /${item.page}` : "Open assistant widget"}</div>
+        </div>
+        <span class="search-result-arrow">→</span>
+      </div>
+    `).join("");
+    resultsBox.__matches = matches;
+    resultsBox.__selected = -1;
+    resultsBox.style.display = "block";
+  },
+  handleSearchKeyDown(e) {
+    const resultsBox = document.getElementById("globalSearchResults");
+    if (!resultsBox || resultsBox.style.display === "none") {
+      if (e.key === "Enter") {
+        const q = e.target.value.trim();
+        if (q) this.navigateSearch(q);
       }
+      return;
+    }
+    const items = resultsBox.querySelectorAll(".search-result-item");
+    let selected = resultsBox.__selected ?? -1;
+
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      selected = Math.min(selected + 1, items.length - 1);
+      items.forEach((el, i) => el.classList.toggle("search-result-hover", i === selected));
+      resultsBox.__selected = selected;
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      selected = Math.max(selected - 1, 0);
+      items.forEach((el, i) => el.classList.toggle("search-result-hover", i === selected));
+      resultsBox.__selected = selected;
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      if (selected >= 0 && resultsBox.__matches && resultsBox.__matches[selected]) {
+        this.selectSearchResult(selected, e.target.value);
+      } else {
+        this.navigateSearch(e.target.value.trim());
+      }
+    } else if (e.key === "Escape") {
+      resultsBox.style.display = "none";
+      e.target.blur();
+    }
+  },
+  selectSearchResult(idx, query) {
+    const resultsBox = document.getElementById("globalSearchResults");
+    const input = document.getElementById("globalSearchInput");
+    const matches = resultsBox?.__matches;
+    if (!matches || !matches[idx]) return;
+
+    const item = matches[idx];
+    resultsBox.style.display = "none";
+    if (input) input.value = "";
+
+    if (item.action) {
+      item.action();
+    } else if (item.page) {
+      AppRouter.navigate(item.page);
+      // If it's directory, also populate the search input
+      if (item.page === "directory" && query) {
+        setTimeout(() => {
+          const dirInput = document.getElementById("dirSearchInput");
+          if (dirInput) { dirInput.value = query; DirectoryModule.applyFilters(); }
+        }, 150);
+      }
+      this.showToast(`📍 Navigated to ${item.label}`);
+    }
+  },
+  navigateSearch(q) {
+    const lower = q.toLowerCase();
+    // Try to find a matching module
+    const match = this._searchIndex.find(item =>
+      item.label.toLowerCase().includes(lower) ||
+      item.keywords.some(kw => lower.includes(kw) || kw.includes(lower))
+    );
+    const resultsBox = document.getElementById("globalSearchResults");
+    const input = document.getElementById("globalSearchInput");
+    if (resultsBox) resultsBox.style.display = "none";
+    if (input) input.value = "";
+
+    if (match) {
+      if (match.action) {
+        match.action();
+      } else if (match.page) {
+        AppRouter.navigate(match.page);
+        this.showToast(`📍 Navigated to ${match.label}`);
+      }
+    } else {
+      // Fall back to employee directory search
+      AppRouter.navigate("directory");
+      setTimeout(() => {
+        const dirInput = document.getElementById("dirSearchInput");
+        if (dirInput) { dirInput.value = q; DirectoryModule.applyFilters(); }
+      }, 150);
     }
   }
 };

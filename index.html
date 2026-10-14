@@ -94,12 +94,6 @@
               <span>Policy &amp; Training Center</span>
             </a>
           </li>
-          <li>
-            <a class="nav-link" data-page="ai-assistant" onclick="AiChatModule.toggleMiniWidget(true)" title="Open AI Onboarding Buddy (Mini View)">
-              <span class="nav-icon">🤖</span>
-              <span>AI Onboarding Buddy</span>
-            </a>
-          </li>
           <li data-role-req="it_admin,super_admin,hr_admin,employee">
             <a class="nav-link" data-page="it-setup" onclick="AppRouter.navigate('it-setup')">
               <span class="nav-icon">💻</span>
@@ -142,8 +136,8 @@
       </div>
     </nav>
 
-    <!-- Sidebar User Footer -->
-    <div class="sidebar-footer">
+    <!-- Sidebar User Footer (Click to open profile) -->
+    <div class="sidebar-footer" onclick="AppRouter.navigate('profile')" style="cursor:pointer;" title="Click to view &amp; update your Profile">
       <div class="user-mini-card">
         <div class="user-avatar-circle" id="sidebarAvatar">EM</div>
         <div class="user-mini-info">
@@ -165,28 +159,23 @@
         <button type="button" class="sidebar-toggle-btn" id="sidebarOpenBtn">☰</button>
         <div class="header-search">
           <span class="search-icon">🔍</span>
-          <input type="text" id="globalSearchInput" placeholder="Search employees, tasks, policies..." onkeyup="GlobalApp.handleSearch(event)">
+          <input type="text" id="globalSearchInput" placeholder="Search modules, tasks, policies..." autocomplete="off" oninput="GlobalApp.handleSearchInput(this.value)" onkeydown="GlobalApp.handleSearchKeyDown(event)" onfocus="GlobalApp.handleSearchInput(this.value)">
+          <div class="header-search-results" id="globalSearchResults"></div>
         </div>
       </div>
 
       <div class="header-right">
-        <!-- Logged-in User Profile Pill (Header) -->
-        <div class="header-user-pill" id="headerUserPill" style="display:flex;align-items:center;gap:8px;padding:4px 12px;background:var(--bg-subtle);border-radius:var(--radius-full);border:1px solid var(--border-color);cursor:pointer;" onclick="AppRouter.navigate('profile')" title="View Your Profile">
+        <!-- Logged-in User Profile Pill (Header - Click to Open Profile) -->
+        <div class="header-user-pill" id="headerUserPill" style="display:flex;align-items:center;gap:8px;padding:4px 12px;background:var(--bg-subtle);border-radius:var(--radius-full);border:1px solid var(--border-color);cursor:pointer;" onclick="AppRouter.navigate('profile')" title="Click to view &amp; update your Profile">
           <div class="user-avatar-circle" id="headerAvatar" style="width:26px;height:26px;font-size:11px;overflow:hidden;">EM</div>
           <span id="headerUserName" style="font-size:12.5px;font-weight:600;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Alex Mercer</span>
         </div>
 
-        <!-- Live Role Switcher -->
-        <div class="role-switcher-box" title="Active Logged-in Role">
+        <!-- Active User Authenticated Role Display -->
+        <div class="role-switcher-box" id="activeUserRoleBox" title="Active Authenticated Role" style="cursor:default;">
           <span style="font-size:12px;color:var(--text-muted);font-weight:600;">Active Role:</span>
-          <select id="roleSwitcherSelect" class="role-switcher-select" onchange="AuthSystem.switchRoleDemo(this.value)">
-            <option value="super_admin">Super Admin</option>
-            <option value="hr_admin">HR Admin</option>
-            <option value="employee">Employee</option>
-            <option value="manager">Manager</option>
-            <option value="it_admin">IT Admin</option>
-            <option value="finance">Finance/Payroll</option>
-          </select>
+          <span id="activeUserRoleBadge" style="font-size:12px;font-weight:700;color:var(--primary);">Employee</span>
+          <select id="roleSwitcherSelect" class="role-switcher-select" style="display:none;" onchange="AuthSystem.switchRoleDemo(this.value)"></select>
         </div>
 
         <!-- Notification Bell -->
