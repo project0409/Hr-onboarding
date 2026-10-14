@@ -72,6 +72,7 @@
 
 /* Dark Mode Theme Overrides */
 body.dark-mode {
+  color-scheme: dark;
   --bg-page: #0b1120;
   --bg-surface: #111827;
   --bg-subtle: #1e293b;
@@ -414,7 +415,35 @@ a:hover {
   font-weight: 600;
   outline: none;
   cursor: pointer;
+  color-scheme: dark;
 }
+
+body.dark-mode .role-switcher-box {
+  background-color: #000000;
+  border-color: #334155;
+}
+
+body.dark-mode .role-switcher-select {
+  background-color: #000000;
+  color: #ffffff;
+}
+
+/* Dropdown options background black and letters white */
+select option,
+.role-switcher-select option,
+.filter-select option,
+.form-control option {
+  background-color: #000000 !important;
+  color: #ffffff !important;
+  padding: 8px 12px;
+}
+
+select option:checked,
+.role-switcher-select option:checked {
+  background-color: #1d4ed8 !important;
+  color: #ffffff !important;
+}
+
 
 /* Action Icons */
 .header-action-btn {
