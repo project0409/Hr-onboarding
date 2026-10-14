@@ -851,8 +851,18 @@
 
         <div class="card">
           <div class="card-header">
-            <div class="card-title">Compliance Documents Checklist</div>
+            <div>
+              <div class="card-title">Compliance Documents Checklist</div>
+              <div class="card-desc">Admin oversight: inspect, preview, verify or reject documents across all employee records</div>
+            </div>
             <div class="filter-controls">
+              <div class="filter-search-wrap" style="min-width:200px;">
+                <span class="search-icon">🔍</span>
+                <input type="text" id="docSearchInput" placeholder="Search file or employee..." onkeyup="DocumentsModule.renderList()">
+              </div>
+              <select class="filter-select" id="docEmployeeFilter" onchange="DocumentsModule.renderList()">
+                <option value="all">All Employees</option>
+              </select>
               <select class="filter-select" id="docStatusFilter" onchange="DocumentsModule.renderList()">
                 <option value="all">All Statuses</option>
                 <option value="Verified">Verified</option>
@@ -1672,6 +1682,153 @@
         <button type="submit" class="btn btn-primary">Dispatch to HR Desk (Floor 2)</button>
       </div>
     </form>
+  </div>
+</div>
+
+<!-- Modal: Detailed Employee Dossier & Progress Inspector -->
+<div class="modal-overlay" id="modalEmployeeProgress">
+  <div class="modal-card modal-xl">
+    <div class="modal-header">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div class="user-avatar-circle" id="dossierAvatar" style="width:42px;height:42px;font-size:16px;">AM</div>
+        <div>
+          <div class="modal-title" id="dossierName">Alex Mercer</div>
+          <div style="font-size:12px;color:var(--text-muted);" id="dossierSub">EMP-1042 • Software Development • Senior Software Engineer</div>
+        </div>
+      </div>
+      <button type="button" class="modal-close-btn" onclick="GlobalApp.closeModals()">✕</button>
+    </div>
+    <div class="modal-body">
+      <!-- Top Progress Scorecard -->
+      <div style="background:var(--bg-subtle);border-radius:var(--radius-lg);padding:18px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;">
+        <div>
+          <div style="font-size:12px;font-weight:700;text-transform:uppercase;color:var(--text-muted);">Overall Onboarding Completion</div>
+          <div style="font-size:32px;font-weight:800;color:var(--primary);" id="dossierOverallPercent">65%</div>
+        </div>
+        <div style="flex:1;min-width:240px;max-width:400px;">
+          <div class="progress-bar-container" style="height:12px;">
+            <div class="progress-bar-fill" id="dossierProgressBar" style="width:65%;"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:11.5px;color:var(--text-muted);margin-top:5px;">
+            <span>Current Status</span>
+            <span id="dossierStatusBadge" class="badge badge-primary">In Progress</span>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-success btn-sm" onclick="DirectoryModule.adminCompleteOnboarding()">✓ Mark All Completed</button>
+        </div>
+      </div>
+
+      <!-- 4 Stages Progress Cards -->
+      <div class="dossier-stages-grid" id="dossierStagesGrid"></div>
+
+      <!-- Tabs within dossier: Documents, Tasks, Profile Data -->
+      <div class="tab-nav">
+        <button class="tab-btn active" id="tabDossierDocsBtn" onclick="DirectoryModule.switchDossierTab('docs')">📁 Uploaded Documents (<span id="dossierDocCount">0</span>)</button>
+        <button class="tab-btn" id="tabDossierTasksBtn" onclick="DirectoryModule.switchDossierTab('tasks')">✅ Assigned Tasks (<span id="dossierTaskCount">0</span>)</button>
+        <button class="tab-btn" id="tabDossierProfileBtn" onclick="DirectoryModule.switchDossierTab('profile')">👤 Candidate Profile</button>
+      </div>
+
+      <!-- Tab Content: Documents -->
+      <div id="dossierTabDocs">
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Document</th>
+                <th>File</th>
+                <th>Date</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="dossierDocsTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Tab Content: Tasks -->
+      <div id="dossierTabTasks" style="display:none;">
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Task Title</th>
+                <th>Role</th>
+                <th>Deadline</th>
+                <th>Priority</th>
+                <th>Progress</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="dossierTasksTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Tab Content: Profile -->
+      <div id="dossierTabProfile" style="display:none;">
+        <div id="dossierProfileDetails"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" onclick="GlobalApp.closeModals()">Close Dossier</button>
+      <button type="button" class="btn btn-primary" onclick="window.print()">🖨️ Print Employee Report</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Document Preview & Inspection -->
+<div class="modal-overlay" id="modalDocPreview">
+  <div class="modal-card modal-lg">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title" id="docPreviewTitle">Document Preview</div>
+        <div style="font-size:12px;color:var(--text-muted);" id="docPreviewSub">Employee: Alex Mercer • Category: ID Proof</div>
+      </div>
+      <button type="button" class="modal-close-btn" onclick="GlobalApp.closeModals()">✕</button>
+    </div>
+    <div class="modal-body">
+      <!-- Simulated Document Inspection Canvas -->
+      <div class="doc-preview-canvas">
+        <div class="doc-preview-watermark">CONFIDENTIAL</div>
+        <div class="doc-preview-icon" id="docPreviewIcon">📄</div>
+        <div style="font-size:16px;font-weight:700;color:var(--text-main);" id="docPreviewFileName">document_sample.pdf</div>
+        <div style="font-size:12.5px;color:var(--text-muted);margin:6px 0 14px;" id="docPreviewMeta">
+          Size: 2.4 MB • Format: PDF Document • Uploaded on 2026-10-14
+        </div>
+        <div style="display:flex;gap:8px;font-size:12px;align-items:center;">
+          <span class="badge badge-success">🔒 SHA-256 Verified</span>
+          <span class="badge badge-info">🛡️ Malware Scan Passed</span>
+          <span id="docPreviewCurrentStatusBadge" class="badge badge-warning">Under Review</span>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:0;padding:16px;">
+        <div style="font-size:13px;font-weight:700;margin-bottom:8px;">Admin Verification Review Decision:</div>
+        <div class="form-grid-2">
+          <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label">Update Status</label>
+            <select class="form-control" id="docPreviewStatusSelect">
+              <option value="Verified">✅ Verified &amp; Approved</option>
+              <option value="Under Review">⏳ Under Review</option>
+              <option value="Resubmission Required">⚠️ Resubmission Required (Unclear / Incomplete)</option>
+              <option value="Rejected">❌ Rejected (Invalid / Mismatched)</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label">Review Feedback / Instructions</label>
+            <input type="text" class="form-control" id="docPreviewFeedbackInput" placeholder="Feedback visible to the employee...">
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" onclick="GlobalApp.closeModals()">Cancel</button>
+      <button type="button" class="btn btn-secondary" onclick="alert('Downloading secured copy of file...')">⬇️ Download File</button>
+      <button type="button" class="btn btn-primary" onclick="DocumentsModule.savePreviewDecision()">Save Verification Decision</button>
+    </div>
   </div>
 </div>
 

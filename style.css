@@ -444,6 +444,20 @@ select option:checked,
   color: #ffffff !important;
 }
 
+body.dark-mode select,
+body.dark-mode .filter-select,
+body.dark-mode .form-control,
+body.dark-mode input.form-control,
+body.dark-mode select.form-control,
+body.dark-mode textarea.form-control,
+body.dark-mode .filter-search-wrap input {
+  background-color: #000000 !important;
+  color: #ffffff !important;
+  border-color: #334155;
+  color-scheme: dark;
+}
+
+
 
 /* Action Icons */
 .header-action-btn {
@@ -971,6 +985,71 @@ textarea.form-control {
 }
 .modal-card.modal-lg {
   max-width: 860px;
+}
+.modal-card.modal-xl {
+  max-width: 1040px;
+}
+
+/* Document Preview Component */
+.doc-preview-canvas {
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 24px;
+  min-height: 220px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  text-align: center;
+  margin-bottom: 16px;
+}
+.doc-preview-watermark {
+  position: absolute;
+  font-size: 80px;
+  opacity: 0.05;
+  pointer-events: none;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+.doc-preview-icon {
+  font-size: 48px;
+  margin-bottom: 10px;
+}
+
+/* Dossier Progress Stages Grid */
+.dossier-stages-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+@media (max-width: 860px) {
+  .dossier-stages-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+.dossier-stage-card {
+  padding: 14px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  background: var(--bg-surface);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.dossier-stage-card.complete {
+  border-color: rgba(16, 185, 129, 0.4);
+  background: var(--success-light);
+}
+.dossier-stage-card.in-progress {
+  border-color: rgba(37, 99, 235, 0.4);
+  background: var(--primary-light);
+}
+.dossier-stage-card.pending {
+  border-color: var(--border-color);
+  background: var(--bg-subtle);
 }
 
 @keyframes modalScale {

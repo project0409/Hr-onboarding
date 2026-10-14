@@ -247,7 +247,18 @@ const SeedData = {
     { id: "doc-2", type: "Educational Certificates / Degrees", empName: "Alex Mercer", fileName: "btech_degree_certificate.pdf", date: "2026-10-14", status: "Verified", notes: "Accredited university degree verified." },
     { id: "doc-3", type: "Previous Relieving & Experience Letter", empName: "Alex Mercer", fileName: "relieving_letter_cloudscale.pdf", date: "2026-10-14", status: "Under Review", notes: "Under review with HR verification desk." },
     { id: "doc-4", type: "Bank Passbook / Cancelled Cheque", empName: "Alex Mercer", fileName: "hdfc_cancelled_cheque.pdf", date: "2026-10-14", status: "Verified", notes: "Account and IFSC confirmed for payroll." },
-    { id: "doc-5", type: "Passport Size Photograph", empName: "Alex Mercer", fileName: "id_card_headshot.jpg", date: "2026-10-14", status: "Verified", notes: "Forwarded to Security for RFID badge print." }
+    { id: "doc-5", type: "Passport Size Photograph", empName: "Alex Mercer", fileName: "id_card_headshot.jpg", date: "2026-10-14", status: "Verified", notes: "Forwarded to Security for RFID badge print." },
+
+    { id: "doc-6", type: "Government ID Proof (Aadhar/Passport)", empName: "Priya Sharma", fileName: "priya_aadhar_card.pdf", date: "2026-10-14", status: "Under Review", notes: "National ID proof under initial review." },
+    { id: "doc-7", type: "Educational Certificates / Degrees", empName: "Priya Sharma", fileName: "design_degree_nid.pdf", date: "2026-10-14", status: "Verified", notes: "National Institute of Design degree verified." },
+    { id: "doc-8", type: "Signed Offer & Appointment Letter", empName: "Priya Sharma", fileName: "priya_offer_signed.pdf", date: "2026-10-14", status: "Under Review", notes: "Signature awaiting HR Director counter-sign." },
+
+    { id: "doc-9", type: "Government ID Proof (Aadhar/Passport)", empName: "Vikram Malhotra", fileName: "vikram_passport.pdf", date: "2026-10-14", status: "Verified", notes: "Passport and visa documents confirmed." },
+    { id: "doc-10", type: "Educational Certificates / Degrees", empName: "Vikram Malhotra", fileName: "btech_certificate_vikram.pdf", date: "2026-10-14", status: "Verified", notes: "Engineering degree verified." },
+    { id: "doc-11", type: "Previous Relieving & Experience Letter", empName: "Vikram Malhotra", fileName: "tcs_relieving_letter.pdf", date: "2026-10-14", status: "Verified", notes: "3 years experience verified." },
+
+    { id: "doc-12", type: "Government ID Proof (Aadhar/Passport)", empName: "Ananya Iyer", fileName: "ananya_pan_aadhar.pdf", date: "2026-10-14", status: "Resubmission Required", notes: "ID scan blurred. Please re-upload high resolution document." },
+    { id: "doc-13", type: "Bank Passbook / Cancelled Cheque", empName: "Ananya Iyer", fileName: "icici_cancelled_cheque.pdf", date: "2026-10-14", status: "Under Review", notes: "Finance verification in queue." }
   ],
   equipment: [
     { id: "eq-1", item: "Dell Latitude 7440 (i7, 32GB RAM)", serial: "SN-DELL-9942", assignedTo: "Alex Mercer", status: "Allocated", date: "2026-10-14" },
@@ -279,7 +290,8 @@ function initDatabase() {
   if (!localStorage.getItem(StorageKeys.TASKS)) {
     localStorage.setItem(StorageKeys.TASKS, JSON.stringify(SeedData.tasks));
   }
-  if (!localStorage.getItem(StorageKeys.DOCS)) {
+  const existingDocs = DB.get(StorageKeys.DOCS);
+  if (!existingDocs || existingDocs.length < 10) {
     localStorage.setItem(StorageKeys.DOCS, JSON.stringify(SeedData.docs));
   }
   if (!localStorage.getItem(StorageKeys.EQUIPMENT)) {
@@ -576,7 +588,7 @@ const DashboardModule = {
           </span>
         </td>
         <td>
-          <button class="btn btn-secondary btn-sm" onclick="DirectoryModule.viewDetails('${c.id}')">View</button>
+          <button class="btn btn-primary btn-sm" onclick="DirectoryModule.checkProgress('${c.id}')">Inspect Progress</button>
         </td>
       </tr>
     `).join("");
@@ -717,9 +729,9 @@ const DirectoryModule = {
     this.applyFilters();
   },
   applyFilters() {
-    const search = (document.getElementById("dirSearchInput").value || "").toLowerCase();
-    const dept = document.getElementById("dirDeptFilter").value;
-    const status = document.getElementById("dirStatusFilter").value;
+    const search = (document.getElementById("dirSearchInput")?.value || "").toLowerCase();
+    const dept = document.getElementById("dirDeptFilter")?.value || "all";
+    const status = document.getElementById("dirStatusFilter")?.value || "all";
 
     const candidates = DB.get(StorageKeys.CANDIDATES);
     const filtered = candidates.filter(c => {
@@ -730,6 +742,8 @@ const DirectoryModule = {
     });
 
     const tbody = document.getElementById("directoryTableBody");
+    if (!tbody) return;
+
     tbody.innerHTML = filtered.map(c => `
       <tr>
         <td>
@@ -741,9 +755,9 @@ const DirectoryModule = {
         <td>${c.role}</td>
         <td>${c.manager}</td>
         <td>${c.joiningDate}</td>
-        <td style="min-width:130px;">
+        <td style="min-width:140px;">
           <div style="font-size:11px;display:flex;justify-content:space-between;margin-bottom:3px;">
-            <span>${c.progress}%</span>
+            <span>Progress</span><span><strong>${c.progress}%</strong></span>
           </div>
           <div class="progress-bar-container">
             <div class="progress-bar-fill" style="width:${c.progress}%"></div>
@@ -751,7 +765,10 @@ const DirectoryModule = {
         </td>
         <td><span class="badge ${c.status === 'Completed' ? 'badge-success' : 'badge-primary'}">${c.status}</span></td>
         <td>
-          <button class="btn btn-secondary btn-sm" onclick="DirectoryModule.viewDetails('${c.id}')">Details</button>
+          <div style="display:flex;gap:6px;">
+            <button class="btn btn-primary btn-sm" onclick="DirectoryModule.checkProgress('${c.id}')">Inspect Progress</button>
+            <button class="btn btn-secondary btn-sm" onclick="DirectoryModule.viewAllDocuments('${c.name}')">Docs</button>
+          </div>
         </td>
       </tr>
     `).join("");
@@ -762,12 +779,171 @@ const DirectoryModule = {
     document.getElementById("dirStatusFilter").value = "all";
     this.applyFilters();
   },
-  viewDetails(empId) {
+  currentInspectId: null,
+  checkProgress(empId) {
+    this.currentInspectId = empId;
     const candidates = DB.get(StorageKeys.CANDIDATES);
     const c = candidates.find(item => item.id === empId);
     if (!c) return;
 
-    alert(`📋 Employee Details for ${c.name} (${c.id}):\n\nDepartment: ${c.dept}\nDesignation: ${c.role}\nReporting Manager: ${c.manager}\nJoining Date: ${c.joiningDate}\nShift: ${c.shift || 'First Shift'}\nFloor: ${c.floor || 'Floor 3'}\nOnboarding Progress: ${c.progress}%\nStatus: ${c.status}`);
+    const allDocs = DB.get(StorageKeys.DOCS);
+    const empDocs = allDocs.filter(d => d.empName.toLowerCase() === c.name.toLowerCase());
+
+    const allTasks = DB.get(StorageKeys.TASKS);
+    const empTasks = allTasks.filter(t => t.assignee.toLowerCase() === c.name.toLowerCase() || t.title.toLowerCase().includes(c.name.toLowerCase()));
+
+    // Set Header
+    document.getElementById("dossierAvatar").textContent = c.name.split(" ").map(w => w[0]).slice(0, 2).join("");
+    document.getElementById("dossierName").textContent = c.name;
+    document.getElementById("dossierSub").textContent = `${c.id} • ${c.dept} • ${c.role} • Reporting Manager: ${c.manager}`;
+
+    // Overall Progress
+    const totalProg = c.progress || 0;
+    document.getElementById("dossierOverallPercent").textContent = `${totalProg}%`;
+    document.getElementById("dossierProgressBar").style.width = `${totalProg}%`;
+    const statusBadge = document.getElementById("dossierStatusBadge");
+    statusBadge.textContent = c.status;
+    statusBadge.className = `badge ${c.status === 'Completed' ? 'badge-success' : 'badge-primary'}`;
+
+    // 4 Stages Cards
+    const verifiedDocsCount = empDocs.filter(d => d.status === "Verified").length;
+    const docStageComplete = empDocs.length > 0 && verifiedDocsCount === empDocs.length;
+
+    const stagesGrid = document.getElementById("dossierStagesGrid");
+    stagesGrid.innerHTML = `
+      <div class="dossier-stage-card complete">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--success-text);">Stage 1: Formalities</div>
+        <div style="font-size:13.5px;font-weight:700;">Offer &amp; NDA</div>
+        <div style="font-size:11.5px;color:var(--text-muted);">✓ Signed Digitally</div>
+      </div>
+      <div class="dossier-stage-card ${docStageComplete ? 'complete' : (verifiedDocsCount > 0 ? 'in-progress' : 'pending')}">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text-muted);">Stage 2: Documents</div>
+        <div style="font-size:13.5px;font-weight:700;">${verifiedDocsCount} of ${Math.max(empDocs.length, 3)} Verified</div>
+        <div style="font-size:11.5px;color:var(--text-muted);">${docStageComplete ? '✓ All Verified' : 'Under Review'}</div>
+      </div>
+      <div class="dossier-stage-card in-progress">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text-muted);">Stage 3: IT Assets</div>
+        <div style="font-size:13.5px;font-weight:700;">Hardware &amp; VPN</div>
+        <div style="font-size:11.5px;color:var(--text-muted);">Provisioned by IT</div>
+      </div>
+      <div class="dossier-stage-card ${totalProg >= 80 ? 'complete' : 'in-progress'}">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text-muted);">Stage 4: Compliance</div>
+        <div style="font-size:13.5px;font-weight:700;">Policy Exam</div>
+        <div style="font-size:11.5px;color:var(--text-muted);">${totalProg >= 60 ? 'Certified (92%)' : 'Scheduled'}</div>
+      </div>
+    `;
+
+    // Tab counts
+    document.getElementById("dossierDocCount").textContent = empDocs.length;
+    document.getElementById("dossierTaskCount").textContent = empTasks.length;
+
+    // Render Dossier Docs
+    const docsTbody = document.getElementById("dossierDocsTableBody");
+    docsTbody.innerHTML = empDocs.length > 0 ? empDocs.map(d => `
+      <tr>
+        <td><strong>${d.type}</strong></td>
+        <td><code>${d.fileName}</code></td>
+        <td>${d.date}</td>
+        <td><span class="badge ${d.status === 'Verified' ? 'badge-success' : (d.status === 'Under Review' ? 'badge-warning' : 'badge-danger')}">${d.status}</span></td>
+        <td>
+          <button class="btn btn-primary btn-sm" onclick="DocumentsModule.openPreview('${d.id}')">Inspect &amp; Verify</button>
+        </td>
+      </tr>
+    `).join("") : `<tr><td colspan="5" class="text-muted" style="text-align:center;padding:16px;">No documents submitted yet.</td></tr>`;
+
+    // Render Dossier Tasks
+    const tasksTbody = document.getElementById("dossierTasksTableBody");
+    tasksTbody.innerHTML = empTasks.length > 0 ? empTasks.map(t => `
+      <tr>
+        <td><strong>${t.title}</strong></td>
+        <td>${t.role}</td>
+        <td>${t.deadline}</td>
+        <td><span class="badge ${t.priority === 'Urgent' ? 'priority-urgent' : 'priority-medium'}">${t.priority}</span></td>
+        <td>${t.progress}%</td>
+        <td><span class="badge ${t.status === 'done' ? 'badge-success' : 'badge-neutral'}">${t.status}</span></td>
+        <td>
+          ${t.status !== 'done' ? `<button class="btn btn-secondary btn-sm" onclick="TasksModule.markDone(${t.id}); DirectoryModule.checkProgress('${empId}')">Mark Done</button>` : '✓'}
+        </td>
+      </tr>
+    `).join("") : `<tr><td colspan="7" class="text-muted" style="text-align:center;padding:16px;">No specific tasks assigned yet.</td></tr>`;
+
+    // Render Dossier Profile
+    const profDetails = document.getElementById("dossierProfileDetails");
+    profDetails.innerHTML = `
+      <div style="background:var(--bg-subtle);padding:16px;border-radius:var(--radius-md);display:grid;grid-template-columns:1fr 1fr;gap:14px;font-size:13px;">
+        <div><strong>Email:</strong> ${c.email}</div>
+        <div><strong>Phone:</strong> ${c.phone || '+91 98765 00000'}</div>
+        <div><strong>Department:</strong> ${c.dept}</div>
+        <div><strong>Reporting Manager:</strong> ${c.manager}</div>
+        <div><strong>Joining Date:</strong> ${c.joiningDate}</div>
+        <div><strong>Work Floor &amp; Bay:</strong> ${c.floor || 'Floor 3'}</div>
+        <div><strong>Assigned Shift:</strong> ${c.shift || 'First Shift (8:50 AM - 5:50 PM)'}</div>
+        <div><strong>Highest Qualification:</strong> ${c.degree || 'Bachelor of Technology'}</div>
+        <div><strong>Bank Name:</strong> ${c.bankName || 'HDFC Bank'}</div>
+        <div><strong>Account Number:</strong> <code>${c.accountNum || '••••••••••••'}</code></div>
+        <div><strong>PAN Card:</strong> <code>${c.pan || 'ABCDE1234F'}</code></div>
+        <div><strong>IFSC Code:</strong> <code>${c.ifsc || 'HDFC0001042'}</code></div>
+      </div>
+    `;
+
+    this.switchDossierTab('docs');
+    GlobalApp.openModal("modalEmployeeProgress");
+  },
+  switchDossierTab(tab) {
+    document.getElementById("dossierTabDocs").style.display = tab === "docs" ? "block" : "none";
+    document.getElementById("dossierTabTasks").style.display = tab === "tasks" ? "block" : "none";
+    document.getElementById("dossierTabProfile").style.display = tab === "profile" ? "block" : "none";
+
+    document.getElementById("tabDossierDocsBtn").classList.toggle("active", tab === "docs");
+    document.getElementById("tabDossierTasksBtn").classList.toggle("active", tab === "tasks");
+    document.getElementById("tabDossierProfileBtn").classList.toggle("active", tab === "profile");
+  },
+  adminCompleteOnboarding() {
+    if (!this.currentInspectId) return;
+    const candidates = DB.get(StorageKeys.CANDIDATES);
+    const c = candidates.find(item => item.id === this.currentInspectId);
+    if (c) {
+      c.progress = 100;
+      c.status = "Completed";
+      DB.set(StorageKeys.CANDIDATES, candidates);
+
+      // Verify all docs for this candidate
+      const docs = DB.get(StorageKeys.DOCS);
+      docs.forEach(d => {
+        if (d.empName.toLowerCase() === c.name.toLowerCase()) {
+          d.status = "Verified";
+          d.notes = "Approved by Admin verification check.";
+        }
+      });
+      DB.set(StorageKeys.DOCS, docs);
+
+      DB.pushAudit(`Admin verified all milestones and completed onboarding for ${c.name} (${c.id})`, AuthSystem.getCurrentUser().name);
+      DB.pushNotification("Onboarding Completed", `All onboarding milestones for ${c.name} have been verified 100%.`, "approval");
+
+      GlobalApp.showToast(`🎉 Onboarding marked 100% complete for ${c.name}!`);
+      this.checkProgress(this.currentInspectId);
+      DashboardModule.render();
+      DirectoryModule.render();
+    }
+  },
+  checkProgressByName(empName) {
+    const candidates = DB.get(StorageKeys.CANDIDATES);
+    const c = candidates.find(item => item.name.toLowerCase() === empName.toLowerCase());
+    if (c) {
+      this.checkProgress(c.id);
+    } else {
+      alert(`Candidate record for ${empName} not found in directory.`);
+    }
+  },
+  viewAllDocuments(empName) {
+    AppRouter.navigate("documents");
+    setTimeout(() => {
+      const empSelect = document.getElementById("docEmployeeFilter");
+      if (empSelect) {
+        empSelect.value = empName;
+        DocumentsModule.renderList();
+      }
+    }, 100);
   }
 };
 
@@ -830,8 +1006,19 @@ const OnboardingModule = {
 const DocumentsModule = {
   selectedDocId: null,
   render() {
+    this.populateEmployeeFilter();
     this.renderKPIs();
     this.renderList();
+  },
+  populateEmployeeFilter() {
+    const select = document.getElementById("docEmployeeFilter");
+    if (!select) return;
+    const candidates = DB.get(StorageKeys.CANDIDATES);
+    const curVal = select.value || "all";
+    select.innerHTML = `<option value="all">All Employees</option>` + candidates.map(c => `
+      <option value="${c.name}">${c.name} (${c.dept})</option>
+    `).join("");
+    select.value = curVal;
   },
   renderKPIs() {
     const docs = DB.get(StorageKeys.DOCS);
@@ -850,18 +1037,25 @@ const DocumentsModule = {
     }
   },
   renderList() {
-    const filter = document.getElementById("docStatusFilter").value;
-    const docs = DB.get(StorageKeys.DOCS);
-    const filtered = filter === "all" ? docs : docs.filter(d => d.status === filter);
+    const statusFilter = document.getElementById("docStatusFilter")?.value || "all";
+    const empFilter = document.getElementById("docEmployeeFilter")?.value || "all";
+    const search = (document.getElementById("docSearchInput")?.value || "").toLowerCase();
 
-    const user = AuthSystem.getCurrentUser();
-    const isHrOrAdmin = user.role === "hr_admin" || user.role === "super_admin";
+    const docs = DB.get(StorageKeys.DOCS);
+    const filtered = docs.filter(d => {
+      const matchStatus = statusFilter === "all" || d.status === statusFilter;
+      const matchEmp = empFilter === "all" || d.empName.toLowerCase() === empFilter.toLowerCase();
+      const matchSearch = d.type.toLowerCase().includes(search) || d.empName.toLowerCase().includes(search) || d.fileName.toLowerCase().includes(search);
+      return matchStatus && matchEmp && matchSearch;
+    });
 
     const tbody = document.getElementById("documentsTableBody");
+    if (!tbody) return;
+
     tbody.innerHTML = filtered.map(d => `
       <tr>
         <td><strong>${d.type}</strong></td>
-        <td>${d.empName}</td>
+        <td><strong>${d.empName}</strong></td>
         <td><code>${d.fileName}</code></td>
         <td>${d.date}</td>
         <td>
@@ -875,11 +1069,10 @@ const DocumentsModule = {
         </td>
         <td style="font-size:12.5px;color:var(--text-muted);">${d.notes || '—'}</td>
         <td>
-          ${isHrOrAdmin ? `
-            <button class="btn btn-secondary btn-sm" onclick="DocumentsModule.openReviewModal('${d.id}')">Review</button>
-          ` : `
-            <button class="btn btn-secondary btn-sm" onclick="alert('Viewing file: ${d.fileName}')">View File</button>
-          `}
+          <div style="display:flex;gap:6px;">
+            <button class="btn btn-primary btn-sm" onclick="DocumentsModule.openPreview('${d.id}')">Inspect &amp; Verify</button>
+            <button class="btn btn-secondary btn-sm" onclick="DirectoryModule.checkProgressByName('${d.empName}')">Candidate Dossier</button>
+          </div>
         </td>
       </tr>
     `).join("");
@@ -921,42 +1114,49 @@ const DocumentsModule = {
     GlobalApp.showToast("✅ Document submitted successfully! HR will verify within 24 hours.");
     this.render();
   },
-  openReviewModal(docId) {
+  openPreview(docId) {
     this.selectedDocId = docId;
     const docs = DB.get(StorageKeys.DOCS);
     const doc = docs.find(d => d.id === docId);
     if (!doc) return;
 
-    document.getElementById("reviewDocMeta").innerHTML = `
-      <div style="background:var(--bg-subtle);padding:12px;border-radius:var(--radius-md);font-size:13px;">
-        <strong>Document:</strong> ${doc.type}<br>
-        <strong>Employee:</strong> ${doc.empName}<br>
-        <strong>File:</strong> <code>${doc.fileName}</code><br>
-        <strong>Current Status:</strong> <span class="badge badge-warning">${doc.status}</span>
-      </div>
-    `;
-    document.getElementById("reviewDecisionSelect").value = "Verified";
-    document.getElementById("reviewNotes").value = "";
-    GlobalApp.openModal("modalReviewDocument");
+    document.getElementById("docPreviewTitle").textContent = `Inspect Document: ${doc.type}`;
+    document.getElementById("docPreviewSub").textContent = `Submitted by ${doc.empName} on ${doc.date}`;
+    document.getElementById("docPreviewFileName").textContent = doc.fileName;
+    document.getElementById("docPreviewIcon").textContent = doc.fileName.endsWith(".jpg") || doc.fileName.endsWith(".png") ? "🖼️" : "📄";
+    document.getElementById("docPreviewMeta").textContent = `Size: 2.4 MB • Format: ${doc.fileName.split('.').pop().toUpperCase()} • Uploaded: ${doc.date}`;
+    
+    const badge = document.getElementById("docPreviewCurrentStatusBadge");
+    badge.textContent = doc.status;
+    badge.className = `badge ${doc.status === 'Verified' ? 'badge-success' : (doc.status === 'Under Review' ? 'badge-warning' : 'badge-danger')}`;
+
+    document.getElementById("docPreviewStatusSelect").value = doc.status;
+    document.getElementById("docPreviewFeedbackInput").value = doc.notes || "";
+
+    GlobalApp.openModal("modalDocPreview");
   },
-  submitReviewDecision() {
-    const decision = document.getElementById("reviewDecisionSelect").value;
-    const notes = document.getElementById("reviewNotes").value.trim() || `Marked ${decision} by HR.`;
+  savePreviewDecision() {
+    if (!this.selectedDocId) return;
+    const newStatus = document.getElementById("docPreviewStatusSelect").value;
+    const feedback = document.getElementById("docPreviewFeedbackInput").value.trim() || `Marked ${newStatus} by Admin.`;
 
     const docs = DB.get(StorageKeys.DOCS);
     const doc = docs.find(d => d.id === this.selectedDocId);
     if (doc) {
-      doc.status = decision;
-      doc.notes = notes;
+      doc.status = newStatus;
+      doc.notes = feedback;
       DB.set(StorageKeys.DOCS, docs);
 
-      DB.pushAudit(`Updated document ${doc.type} status to '${decision}' for ${doc.empName}`, AuthSystem.getCurrentUser().name);
-      DB.pushNotification("Document Verification Update", `Your ${doc.type} has been updated to: ${decision}`, "document");
+      DB.pushAudit(`Admin updated ${doc.type} (${doc.fileName}) status to '${newStatus}' for ${doc.empName}`, AuthSystem.getCurrentUser().name);
+      DB.pushNotification("Document Status Updated", `Your ${doc.type} has been updated to: ${newStatus}`, "document");
     }
 
     GlobalApp.closeModals();
-    GlobalApp.showToast(`Document marked as ${decision}!`);
+    GlobalApp.showToast(`Document decision saved as: ${newStatus}!`);
     this.render();
+    if (DirectoryModule.currentInspectId) {
+      DirectoryModule.checkProgress(DirectoryModule.currentInspectId);
+    }
   }
 };
 
