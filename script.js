@@ -279,37 +279,9 @@ const SeedData = {
   ]
 };
 
-// Initialize Database Storage
-function initDatabase() {
-  if (!localStorage.getItem(StorageKeys.USERS)) {
-    localStorage.setItem(StorageKeys.USERS, JSON.stringify(SeedData.users));
-  }
-  if (!localStorage.getItem(StorageKeys.CANDIDATES)) {
-    localStorage.setItem(StorageKeys.CANDIDATES, JSON.stringify(SeedData.candidates));
-  }
-  if (!localStorage.getItem(StorageKeys.TASKS)) {
-    localStorage.setItem(StorageKeys.TASKS, JSON.stringify(SeedData.tasks));
-  }
-  const existingDocs = DB.get(StorageKeys.DOCS);
-  if (!existingDocs || existingDocs.length < 10) {
-    localStorage.setItem(StorageKeys.DOCS, JSON.stringify(SeedData.docs));
-  }
-  if (!localStorage.getItem(StorageKeys.EQUIPMENT)) {
-    localStorage.setItem(StorageKeys.EQUIPMENT, JSON.stringify(SeedData.equipment));
-  }
-  if (!localStorage.getItem(StorageKeys.NOTIFS)) {
-    localStorage.setItem(StorageKeys.NOTIFS, JSON.stringify(SeedData.notifications));
-  }
-  if (!localStorage.getItem(StorageKeys.TRAINING)) {
-    localStorage.setItem(StorageKeys.TRAINING, JSON.stringify(SeedData.training));
-  }
-  if (!localStorage.getItem(StorageKeys.CURRENT_USER)) {
-    localStorage.setItem(StorageKeys.CURRENT_USER, JSON.stringify(SeedData.users[0]));
-  }
-}
-initDatabase();
-
-// Database CRUD Accessor
+// =========================================================================
+// 2. DATABASE CRUD ACCESSOR & STORAGE
+// =========================================================================
 const DB = {
   get(key) {
     try {
@@ -349,9 +321,42 @@ const DB = {
       read: false
     });
     this.set(StorageKeys.NOTIFS, list);
-    NotificationModule.renderBadge();
+    if (typeof NotificationModule !== "undefined" && NotificationModule.renderBadge) {
+      NotificationModule.renderBadge();
+    }
   }
 };
+
+// Initialize Database Storage
+function initDatabase() {
+  if (!localStorage.getItem(StorageKeys.USERS)) {
+    localStorage.setItem(StorageKeys.USERS, JSON.stringify(SeedData.users));
+  }
+  if (!localStorage.getItem(StorageKeys.CANDIDATES)) {
+    localStorage.setItem(StorageKeys.CANDIDATES, JSON.stringify(SeedData.candidates));
+  }
+  if (!localStorage.getItem(StorageKeys.TASKS)) {
+    localStorage.setItem(StorageKeys.TASKS, JSON.stringify(SeedData.tasks));
+  }
+  const existingDocs = DB.get(StorageKeys.DOCS);
+  if (!existingDocs || existingDocs.length < 10) {
+    localStorage.setItem(StorageKeys.DOCS, JSON.stringify(SeedData.docs));
+  }
+  if (!localStorage.getItem(StorageKeys.EQUIPMENT)) {
+    localStorage.setItem(StorageKeys.EQUIPMENT, JSON.stringify(SeedData.equipment));
+  }
+  if (!localStorage.getItem(StorageKeys.NOTIFS)) {
+    localStorage.setItem(StorageKeys.NOTIFS, JSON.stringify(SeedData.notifications));
+  }
+  if (!localStorage.getItem(StorageKeys.TRAINING)) {
+    localStorage.setItem(StorageKeys.TRAINING, JSON.stringify(SeedData.training));
+  }
+  if (!localStorage.getItem(StorageKeys.CURRENT_USER)) {
+    localStorage.setItem(StorageKeys.CURRENT_USER, JSON.stringify(SeedData.users[0]));
+  }
+}
+initDatabase();
+
 
 // =========================================================================
 // 3. AUTHENTICATION & ROLE-BASED ACCESS SYSTEM
@@ -1153,6 +1158,32 @@ const DocumentsModule = {
 
     GlobalApp.closeModals();
     GlobalApp.showToast(`Document decision saved as: ${newStatus}!`);
+    this.render();
+    if (DirectoryModule.currentInspectId) {
+      DirectoryModule.checkProgress(DirectoryModule.currentInspectId);
+    }
+  },
+  submitReviewDecision() {
+    if (!this.selectedDocId) {
+      GlobalApp.closeModals();
+      return;
+    }
+    const select = document.getElementById("reviewDecisionSelect");
+    const notesInput = document.getElementById("reviewNotes");
+    const newStatus = select ? select.value : "Verified";
+    const notes = notesInput ? notesInput.value.trim() : "";
+
+    const docs = DB.get(StorageKeys.DOCS);
+    const doc = docs.find(d => d.id === this.selectedDocId);
+    if (doc) {
+      doc.status = newStatus;
+      doc.notes = notes || `Marked ${newStatus} by HR Review.`;
+      DB.set(StorageKeys.DOCS, docs);
+      DB.pushAudit(`HR updated ${doc.type} status to '${newStatus}' for ${doc.empName}`, AuthSystem.getCurrentUser().name);
+      DB.pushNotification("Document Status Updated", `Your ${doc.type} has been updated to: ${newStatus}`, "document");
+    }
+    GlobalApp.closeModals();
+    GlobalApp.showToast(`Document verified as: ${newStatus}!`);
     this.render();
     if (DirectoryModule.currentInspectId) {
       DirectoryModule.checkProgress(DirectoryModule.currentInspectId);
