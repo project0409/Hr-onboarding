@@ -3,874 +3,1694 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>HR Onboarding Portal</title>
+  <title>Enterprise HR Onboarding Platform</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <header id="pageHero" class="page-hero">
-    <div>
-      <p class="eyebrow">Employee onboarding portal</p>
-      <h1>HR Onboarding Assistant</h1>
-      <p>
-        Ask onboarding questions grounded in the provided FAQ and policy
-        documents, create tasks, and check task status conversationally.
-      </p>
-    </div>
-  </header>
 
-  <nav id="menuTabs" class="menu-tabs" aria-label="Application menu">
-    <button type="button" class="menu-btn active" data-menu="home">Home</button>
-    <button type="button" class="menu-btn" data-menu="chat">Chat and Tasks</button>
-    <button type="button" class="menu-btn" data-menu="exam">Quiz Exam</button>
-    <button id="adminNavBtn" type="button" class="menu-btn admin-btn" data-menu="admin" style="display: none;">🛡️ Admin Console</button>
-    <div class="nav-right-actions">
-      <div id="authNavContainer" class="auth-nav-container">
-        <!-- Rendered dynamically by script.js: either Login/Register button or User greeting + Logout -->
-        <button id="navAuthBtn" type="button" class="nav-auth-btn" title="Sign In or Create Account">🔐 Sign In</button>
-      </div>
-      <button id="reloadPageBtn" type="button" class="tour-trigger-btn reload-nav-btn" title="Reload Application">🔄 Reload</button>
-      <button id="startTourBtn" type="button" class="tour-trigger-btn" title="Take a tour of all modes">❓ Tour</button>
-      <button id="themeToggleBtn" type="button" class="theme-btn">Dark Mode</button>
-    </div>
-  </nav>
+<div class="app-container">
 
-  <!-- HOME LANDING PAGE -->
-  <section id="homeMenu" class="home-page menu-page active">
-    <!-- Hero Banner with Live Onboarding Badge -->
-    <div class="home-hero-card">
-      <div class="home-hero-content">
-        <span class="home-badge">★ Employee Onboarding Hub</span>
-        <h2>Welcome to the Team!</h2>
-        <p>
-          We are thrilled to have you with us. This interactive portal is your complete guide to company policies, 
-          shift timings, IT setup, cafeteria navigation, and essential onboarding milestones.
-        </p>
-        <div class="home-hero-actions">
-          <button type="button" class="home-btn primary" data-goto="chat">
-            <span>💬</span> Open AI Assistant &amp; Tasks
-          </button>
-          <button type="button" class="home-btn secondary" data-goto="exam">
-            <span>📝</span> Take Policy Assessment
-          </button>
-          <a href="#quickReference" class="home-btn outline">
-            <span>📖</span> Quick Policy Guide
-          </a>
-        </div>
-      </div>
-
-      <!-- Live Employee Status Widget -->
-      <div class="home-status-card">
-        <div class="profile-header">
-          <div class="profile-avatar" id="homeUserAvatar">👋</div>
-          <div>
-            <strong id="homeUserName">New Team Member</strong>
-            <p id="homeUserRole">Onboarding Phase 1 (Active)</p>
-          </div>
-        </div>
-        <div class="status-metrics-grid">
-          <div class="status-metric-box">
-            <span class="metric-num" id="homeOpenTasksCount">0</span>
-            <span class="metric-label">Open Tasks</span>
-          </div>
-          <div class="status-metric-box">
-            <span class="metric-num" id="homeDoneTasksCount">0</span>
-            <span class="metric-label">Tasks Done</span>
-          </div>
-          <div class="status-metric-box">
-            <span class="metric-num" id="homeProgressPercent">0%</span>
-            <span class="metric-label">Checklist Progress</span>
-          </div>
-        </div>
-        <div class="status-footer">
-          <span>Policy Assessment:</span>
-          <span id="homeAssessmentStatus" class="status-pill neutral">Not Started</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- 3 Core Navigation Pathways -->
-    <div class="home-section-title">
-      <h3>Explore Your Onboarding Workspace</h3>
-      <p>Choose an onboarding module below to get started</p>
-    </div>
-
-    <div class="home-pathways-grid">
-      <!-- Pathway 1: AI Assistant -->
-      <article class="pathway-card">
-        <div class="pathway-icon blue">🤖</div>
-        <div class="pathway-body">
-          <span class="pathway-tag">24/7 Support</span>
-          <h4>AI Onboarding Buddy</h4>
-          <p>
-            Have questions about lunch timings, dress code, leave applications, or cafeteria washrooms? 
-            Ask our intelligent assistant grounded directly in verified company handbook documents.
-          </p>
-          <div class="pathway-chips">
-            <span class="chip">🕒 Shift Timings</span>
-            <span class="chip">🏖 18 Paid Leaves</span>
-            <span class="chip">🍔 Cafeteria Floor</span>
-          </div>
-        </div>
-        <button type="button" class="pathway-btn" data-goto="chat">
-          Launch AI Assistant →
-        </button>
-      </article>
-
-      <!-- Pathway 2: Task Tracker -->
-      <article class="pathway-card">
-        <div class="pathway-icon green">✅</div>
-        <div class="pathway-body">
-          <span class="pathway-tag">Self-Service</span>
-          <h4>Task &amp; Compliance Tracker</h4>
-          <p>
-            Stay organized with your onboarding checklist: submit ID proof, complete IT system setup, 
-            and track your daily induction milestones with automatic browser storage.
-          </p>
-          <div class="pathway-chips">
-            <span class="chip">📁 ID Submission</span>
-            <span class="chip">💻 VPN &amp; MFA</span>
-            <span class="chip">🤝 Manager 1-on-1</span>
-          </div>
-        </div>
-        <button type="button" class="pathway-btn" data-goto="chat">
-          View My Tasks →
-        </button>
-      </article>
-
-      <!-- Pathway 3: Policy Exam -->
-      <article class="pathway-card">
-        <div class="pathway-icon purple">🎓</div>
-        <div class="pathway-body">
-          <span class="pathway-tag">Required Checklist</span>
-          <h4>Policy Knowledge Exam</h4>
-          <p>
-            Take our 20-minute policy assessment to certify your understanding of workplace timings, 
-            attendance rules, and data security. Receive an instant scorecard.
-          </p>
-          <div class="pathway-chips">
-            <span class="chip">⏱ 20 Minutes</span>
-            <span class="chip">📋 30 Questions</span>
-            <span class="chip">🏆 60% Passing Mark</span>
-          </div>
-        </div>
-        <button type="button" class="pathway-btn" data-goto="exam">
-          Start Assessment →
-        </button>
-      </article>
-    </div>
-
-    <!-- 4 Essential Pillars Quick Reference -->
-    <div id="quickReference" class="home-section-title">
-      <h3>Essential Workplace Quick Reference</h3>
-      <p>Key information every new employee needs to know on Day 1</p>
-    </div>
-
-    <div class="home-pillars-grid">
-      <!-- Pillar 1: Timings -->
-      <div class="pillar-card">
-        <div class="pillar-header">
-          <span class="pillar-icon">🕒</span>
-          <h4>Office &amp; Shift Timings</h4>
-        </div>
-        <ul class="pillar-list">
-          <li><strong>Office Open:</strong> 6:00 AM – 9:00 PM (Mon – Sat)</li>
-          <li><strong>Holidays:</strong> 1st &amp; 3rd Saturday + Sundays</li>
-          <li><strong>First Shift:</strong> 8:50 AM – 5:50 PM (Lunch: 1:05 PM)</li>
-          <li><strong>Second Shift:</strong> 9:20 AM – 6:30 PM (Lunch: 1:50 PM)</li>
-          <li><strong>Night Shift:</strong> 9:00 PM – 6:00 AM (Lunch: 10:00 PM)</li>
-          <li><strong>Grace Time:</strong> 10 mins (Late-in requires portal approval)</li>
-        </ul>
-      </div>
-
-      <!-- Pillar 2: Leaves -->
-      <div class="pillar-card">
-        <div class="pillar-header">
-          <span class="pillar-icon">🏖</span>
-          <h4>Leaves &amp; PTO Rules</h4>
-        </div>
-        <ul class="pillar-list">
-          <li><strong>Annual Allotment:</strong> 18 Paid Leaves (12 Casual + 6 Sick)</li>
-          <li><strong>Accrual:</strong> Credited monthly to your portal account</li>
-          <li><strong>Application:</strong> Apply in HR Portal ≥ 2 days in advance</li>
-          <li><strong>Sick Leave:</strong> Can be applied on the day of illness</li>
-          <li><strong>Other Types:</strong> Half-Day, LOP, Maternity &amp; Paternity</li>
-        </ul>
-      </div>
-
-      <!-- Pillar 3: IT & Credentials -->
-      <div class="pillar-card">
-        <div class="pillar-header">
-          <span class="pillar-icon">💻</span>
-          <h4>IT &amp; Role Credentials</h4>
-        </div>
-        <ul class="pillar-list">
-          <li><strong>Hardware:</strong> Allocated laptop, charger, and ID badge</li>
-          <li><strong>Access:</strong> Role-based access (Developers get Git, VPN &amp; Jira)</li>
-          <li><strong>Security:</strong> Change temporary password within 24 hours</li>
-          <li><strong>Confidentiality:</strong> Never share logins or copy company data</li>
-          <li><strong>IT Support:</strong> Located on Floor 3 for technical assistance</li>
-        </ul>
-      </div>
-
-      <!-- Pillar 4: Facilities & Floors -->
-      <div class="pillar-card">
-        <div class="pillar-header">
-          <span class="pillar-icon">🏢</span>
-          <h4>Building Navigation</h4>
-        </div>
-        <ul class="pillar-list">
-          <li><strong>Top Floor:</strong> Cafeteria, dining &amp; pantry areas</li>
-          <li><strong>Washrooms:</strong> Right corner of the top-floor cafeteria</li>
-          <li><strong>Floor 2:</strong> HR Support &amp; Employee work bays</li>
-          <li><strong>Floor 3:</strong> IT Support, Development &amp; Manager cabins</li>
-          <li><strong>Floor 4:</strong> Design studio &amp; executive suites</li>
-          <li><strong>Basement:</strong> B1 for two-wheelers | B2 for cars</li>
-        </ul>
-      </div>
-    </div>
-
-    <!-- Onboarding Progression Timeline -->
-    <div class="home-section-title">
-      <h3>Your 3-Step Onboarding Roadmap</h3>
-      <p>Follow these steps to complete your initial induction</p>
-    </div>
-
-    <div class="home-steps-grid">
-      <div class="step-card">
-        <div class="step-badge">1</div>
-        <h4>Ask Questions &amp; Explore</h4>
-        <p>Talk with the AI Assistant to understand your shift hours, department bays, and workplace policies.</p>
-      </div>
-      <div class="step-card">
-        <div class="step-badge">2</div>
-        <h4>Complete Required Tasks</h4>
-        <p>Upload identification proofs, set up your IT credentials and VPN, and schedule your manager induction.</p>
-      </div>
-      <div class="step-card">
-        <div class="step-badge">3</div>
-        <h4>Clear Policy Exam</h4>
-        <p>Take the 20-minute Policy Assessment to verify your compliance knowledge and earn your score certification.</p>
-      </div>
-    </div>
-
-    <!-- Support Helpdesk Banner -->
-    <div class="home-support-banner">
-      <div class="support-info">
-        <h4>Need Additional Assistance?</h4>
-        <p>The HR Support team is on <strong>Floor 2</strong>. For IT issues, visit IT Support on <strong>Floor 3</strong> or contact us through the HR Portal.</p>
-      </div>
-      <div class="support-actions">
-        <button type="button" class="support-btn" data-goto="chat">Chat with Assistant</button>
-      </div>
-    </div>
-  </section>
-
-  <main id="chatMenu" class="app menu-page">
-    <section class="chat-panel">
-      <!-- Mode Instruction Banner -->
-      <div class="mode-instruction-banner chat-mode-banner" id="chatModeInstructions">
-        <div class="mode-instr-left">
-          <span class="mode-instr-icon">🤖</span>
-          <div class="mode-instr-text">
-            <strong>AI Assistant &amp; Task Tracker Mode</strong>
-            <p>Ask any onboarding question — shift timings, leave policy, IT setup, cafeteria directions, uniform code — and get instant answers. Use the <strong>Task panel</strong> on the right to create and track your onboarding checklist items.</p>
-          </div>
-        </div>
-        <div class="mode-instr-chips">
-          <span class="instr-chip">💬 Ask any policy question</span>
-          <span class="instr-chip">✅ Add &amp; track tasks</span>
-          <span class="instr-chip">🎤 Voice input supported</span>
-          <span class="instr-chip">📝 Type "Start quiz" to begin exam</span>
-        </div>
-        <button class="mode-instr-close" id="closeChatBanner" title="Dismiss">✕</button>
-      </div>
-
-      <header class="top-bar">
+  <!-- =========================================================================
+       APP SIDEBAR NAVIGATION
+       ========================================================================= -->
+  <aside class="app-sidebar" id="appSidebar">
+    <div class="sidebar-header">
+      <a href="#main-dashboard" class="brand-wrap" onclick="AppRouter.navigate('main-dashboard')">
+        <div class="brand-icon">HR</div>
         <div>
-          <h2>Conversation</h2>
-          <p>Ask questions, create tasks, or check task status.</p>
+          <div class="brand-title">Enterprise HR</div>
+          <div class="brand-subtitle">Onboarding Suite</div>
         </div>
-        <span id="quizBadge" class="status-dot">Ready</span>
-      </header>
-
-      <div id="chatBox" class="chat-box" aria-live="polite"></div>
-
-
-      <div class="quick-actions">
-        <button type="button" class="quick-btn">Office Timings</button>
-        <button type="button" class="quick-btn">Leave Types</button>
-        <button type="button" class="quick-btn">IT Setup</button>
-        <button type="button" class="quick-btn">Start quiz</button>
-      </div>
-
-      <form id="chatForm" class="chat-form">
-        <input
-          id="userInput"
-          type="text"
-          placeholder="Ask about timings, uniform, lunch, leaves, or type Start quiz"
-          autocomplete="off"
-          required
-        >
-        <button id="micBtn" type="button" class="mic-btn" title="Speak to Assistant">🎤</button>
-        <button type="submit">Send</button>
-      </form>
-    </section>
-
-    <aside class="side-panel">
-      <section class="task-panel">
-        <!-- Task Mode Mini-instruction -->
-        <div class="task-mode-hint" id="taskModeHint">
-          <span class="task-hint-icon">✅</span>
-          <div>
-            <strong>Onboarding Task Tracker</strong>
-            <p>Add tasks like "Submit ID proof", "Set up VPN", or "Schedule manager 1-on-1". Mark them done as you complete each step.</p>
-          </div>
-          <button class="mode-instr-close" id="closeTaskHint" title="Dismiss">✕</button>
-        </div>
-
-        <div class="task-header">
-
-          <div>
-            <p class="eyebrow">Task tracker</p>
-            <h2>Onboarding Tasks</h2>
-          </div>
-          <button id="clearTasksBtn" type="button">Clear</button>
-        </div>
-        <div class="task-summary">
-          <div>
-            <span id="openCount">0</span>
-            <p>Open</p>
-          </div>
-          <div>
-            <span id="doneCount">0</span>
-            <p>Done</p>
-          </div>
-          <div>
-            <span id="progressCount">0%</span>
-            <p>Progress</p>
-          </div>
-        </div>
-        <form id="taskForm" class="task-form">
-          <input
-            id="taskInput"
-            type="text"
-            placeholder="Type a task, e.g. submit tax forms"
-            autocomplete="off"
-            required
-          >
-          <button type="submit">Add Task</button>
-        </form>
-        <ul id="taskList" class="task-list"></ul>
-        <p class="hint">
-          Type a task above and click Add Task. You can also ask the bot:
-          "show my tasks" or "mark laptop setup done".
-        </p>
-      </section>
-    </aside>
-  </main>
-
-  <section id="examMenu" class="exam-page menu-page">
-    <!-- Exam Mode Instruction Banner -->
-    <div class="mode-instruction-banner exam-mode-banner" id="examModeInstructions">
-      <div class="mode-instr-left">
-        <span class="mode-instr-icon">📝</span>
-        <div class="mode-instr-text">
-          <strong>Policy Assessment Exam Mode</strong>
-          <p>This is a <strong>30-question, 20-minute timed exam</strong> based on official HR policy documents. Read each question carefully and select one answer. You can mark questions for review and navigate freely. The exam auto-submits when the timer ends.</p>
-        </div>
-      </div>
-      <div class="mode-instr-chips">
-        <span class="instr-chip exam-chip">⏱ 20 Minutes Timed</span>
-        <span class="instr-chip exam-chip">📋 30 MCQ Questions</span>
-        <span class="instr-chip exam-chip">🏆 60% to Pass</span>
-        <span class="instr-chip exam-chip">🔖 Mark for Review Available</span>
-        <span class="instr-chip exam-chip">⌨️ Keyboard: A/B/C or 1/2/3 to answer</span>
-      </div>
-      <button class="mode-instr-close" id="closeExamBanner" title="Dismiss">✕</button>
+      </a>
+      <button type="button" class="sidebar-toggle-btn" id="sidebarCloseBtn">✕</button>
     </div>
 
-    <div class="exam-shell">
-      <header class="exam-mainbar">
-        <div class="exam-breadcrumb">
-          <button id="breadcrumbBackBtn" type="button" class="breadcrumb-back-btn" title="Go back">&#8592;</button>
-          <span>HR Onboarding Test</span>
-          <span>›</span>
-          <span>Policy Assessment</span>
-        </div>
-        <div class="exam-top-actions">
-          <button id="backToChatBtn" type="button" class="exam-link-btn">Exit</button>
-          <button id="submitAnswerBtn" type="button" class="review-submit-btn" disabled>Review and Submit</button>
-        </div>
-      </header>
-
-      <div class="exam-layout not-started">
-        <aside class="exam-palette-panel">
-          <p class="palette-title">Questions</p>
-          <div id="questionPalette" class="question-palette"></div>
-          <div class="palette-legend">
-            <div class="legend-item"><span class="legend-dot answered"></span> Answered</div>
-            <div class="legend-item"><span class="legend-dot skipped"></span> Skipped</div>
-            <div class="legend-item"><span class="legend-dot reviewed"></span> Review</div>
-            <div class="legend-item"><span class="legend-dot not-visited"></span> Unvisited</div>
-          </div>
-        </aside>
-
-        <main class="exam-main-panel">
-          <header class="exam-header">
-            <div>
-              <p class="eyebrow">Quiz exam</p>
-              <h2>Onboarding Policy Assessment</h2>
-              <p>Answer one question at a time. Select the best option and submit.</p>
-            </div>
-            <span id="examStatus" class="status-dot">Not started</span>
-          </header>
-
-          <div class="exam-card">
-            <div class="exam-top">
-              <span id="examCounter">Question 0 of 0</span>
-              <span id="examScore">Score: 0</span>
-            </div>
-            <div class="exam-progress">
-              <div id="examProgressFill"></div>
-            </div>
-            <h3 id="examQuestion">Click Start Exam to begin.</h3>
-            <div id="examOptions" class="exam-options"></div>
-            <p id="examResult" class="exam-result"></p>
-
-            <!-- In-exam navigation actions -->
-            <div id="inExamActions" class="exam-actions" style="display: none;">
-              <button id="prevQuestionBtn" type="button" class="exam-nav-btn" disabled>← Previous</button>
-              <button id="clearAnswerBtn" type="button" class="clear-response-btn" disabled>Clear Response</button>
-              <button id="markReviewBtn" type="button" class="mark-review-btn">Mark for Review</button>
-              <button id="nextQuestionBtn" type="button" class="exam-nav-btn" disabled>Save and Next →</button>
-              <button id="bottomReviewBtn" type="button" class="bottom-submit-btn">Review &amp; Submit</button>
-            </div>
-
-            <!-- Pre-exam action (Instructions screen only) -->
-            <div id="preExamActions" class="exam-actions">
-              <button id="startExamBtn" type="button">Start Exam</button>
-            </div>
-          </div>
-        </main>
-
-        <aside class="exam-side-panel">
-          <section class="timer-card">
-            <div id="examTimer" class="timer-value">20:00</div>
-            <div class="timer-labels">
-              <span>Min</span>
-              <span>Sec</span>
-            </div>
-            <button id="aboutTestBtn" type="button" class="side-soft-btn">About Test</button>
-            <button id="readInstructionsBtn" type="button" class="side-soft-btn">Read Instructions</button>
-          </section>
-
-          <section class="overview-card">
-            <h3>Overview</h3>
-            <dl>
-              <div><dt>Total Questions</dt><dd id="totalQuestionsCount">0</dd></div>
-              <div><dt>Visited</dt><dd id="visitedCount">0</dd></div>
-              <div><dt>Not Visited</dt><dd id="notVisitedCount">0</dd></div>
-              <div><dt>Answered</dt><dd id="answeredCount">0</dd></div>
-              <div><dt>Marked Review</dt><dd id="reviewedCount">0</dd></div>
-              <div><dt>Not Answered</dt><dd id="notAnsweredCount">0</dd></div>
-            </dl>
-          </section>
-        </aside>
-      </div>
-    </div>
-
-    <!-- Exam Interactive Modals -->
-    <div id="examModalOverlay" class="exam-modal-overlay" style="display: none;">
-      <!-- About Test Modal -->
-      <div id="aboutTestModal" class="exam-modal-card" style="display: none;">
-        <div class="modal-header">
-          <h3>About Onboarding Assessment</h3>
-          <button type="button" class="modal-close-btn" data-close="aboutTestModal">×</button>
-        </div>
-        <div class="modal-body">
-          <p>This assessment evaluates your understanding of key company policies, workplace guidelines, and operational procedures.</p>
-          <ul class="modal-list">
-            <li><strong>Duration:</strong> 20:00 Minutes timed assessment</li>
-            <li><strong>Total Questions:</strong> 30 multiple-choice questions grounded in official HR documents</li>
-            <li><strong>Passing Mark:</strong> 60% required to clear onboarding policy check</li>
-            <li><strong>Topics Covered:</strong> Timings, leave rules, IT credentials, office navigation, holidays, safety &amp; conduct</li>
-          </ul>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="modal-action-btn primary" data-close="aboutTestModal">Got it, Return to Exam</button>
-        </div>
+    <nav class="sidebar-nav">
+      <!-- Group: Core Navigation -->
+      <div class="nav-group">
+        <div class="nav-group-title">Core Dashboards</div>
+        <ul class="nav-list">
+          <li>
+            <a class="nav-link active" data-page="main-dashboard" onclick="AppRouter.navigate('main-dashboard')">
+              <span class="nav-icon">📊</span>
+              <span>Executive Dashboard</span>
+            </a>
+          </li>
+          <li>
+            <a class="nav-link" data-page="employee-dashboard" onclick="AppRouter.navigate('employee-dashboard')">
+              <span class="nav-icon">🚀</span>
+              <span>My Onboarding Hub</span>
+            </a>
+          </li>
+          <li>
+            <a class="nav-link" data-page="profile" onclick="AppRouter.navigate('profile')">
+              <span class="nav-icon">👤</span>
+              <span>My Profile &amp; Forms</span>
+            </a>
+          </li>
+        </ul>
       </div>
 
-      <!-- Instructions Modal -->
-      <div id="instructionsModal" class="exam-modal-card" style="display: none;">
-        <div class="modal-header">
-          <h3>Exam Instructions</h3>
-          <button type="button" class="modal-close-btn" data-close="instructionsModal">×</button>
-        </div>
-        <div class="modal-body">
-          <ul class="modal-list">
-            <li><strong>Single Choice:</strong> Choose one option for each question.</li>
-            <li><strong>Navigation:</strong> Use <em>Save and Next</em> or <em>Previous</em>, or jump directly using the question palette.</li>
-            <li><strong>Mark for Review:</strong> Purple buttons mark questions to double check before submission.</li>
-            <li><strong>Auto-Submit:</strong> When the countdown timer reaches 00:00, your test auto-submits.</li>
-            <li><strong>Keyboard Shortcuts:</strong> Press <strong>1, 2, 3</strong> or <strong>A, B, C</strong> to pick options, <strong>Enter</strong> for next question, <strong>M</strong> to mark for review.</li>
-          </ul>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="modal-action-btn primary" data-close="instructionsModal">Close Instructions</button>
-        </div>
+      <!-- Group: Lifecycle Management -->
+      <div class="nav-group" id="navGroupLifecycle">
+        <div class="nav-group-title">Onboarding Lifecycle</div>
+        <ul class="nav-list">
+          <li data-role-req="hr_admin,super_admin,manager">
+            <a class="nav-link" data-page="directory" onclick="AppRouter.navigate('directory')">
+              <span class="nav-icon">👥</span>
+              <span>Employee Directory</span>
+            </a>
+          </li>
+          <li>
+            <a class="nav-link" data-page="documents" onclick="AppRouter.navigate('documents')">
+              <span class="nav-icon">📁</span>
+              <span>Document Verification</span>
+              <span class="nav-badge alert" id="navPendingDocsBadge" style="display:none;">0</span>
+            </a>
+          </li>
+          <li>
+            <a class="nav-link" data-page="tasks" onclick="AppRouter.navigate('tasks')">
+              <span class="nav-icon">✅</span>
+              <span>Tasks &amp; Milestones</span>
+              <span class="nav-badge" id="navOpenTasksBadge">0</span>
+            </a>
+          </li>
+          <li>
+            <a class="nav-link" data-page="formalities" onclick="AppRouter.navigate('formalities')">
+              <span class="nav-icon">✍️</span>
+              <span>Formalities &amp; Approvals</span>
+            </a>
+          </li>
+        </ul>
       </div>
 
-      <!-- Submit Confirmation Modal -->
-      <div id="submitConfirmModal" class="exam-modal-card" style="display: none;">
-        <div class="modal-header">
-          <h3>Submit Policy Assessment</h3>
-          <button type="button" class="modal-close-btn" data-close="submitConfirmModal">×</button>
-        </div>
-        <div class="modal-body">
-          <p>Please review your answers summary before final submission:</p>
-          <div class="modal-summary-grid">
-            <div class="summary-stat-box"><span id="modalTotalCount" class="stat-num">0</span><span class="stat-lbl">Total</span></div>
-            <div class="summary-stat-box answered"><span id="modalAnsweredCount" class="stat-num">0</span><span class="stat-lbl">Answered</span></div>
-            <div class="summary-stat-box skipped"><span id="modalUnansweredCount" class="stat-num">0</span><span class="stat-lbl">Unanswered</span></div>
-            <div class="summary-stat-box reviewed"><span id="modalReviewedCount" class="stat-num">0</span><span class="stat-lbl">For Review</span></div>
-          </div>
-          <p class="modal-subtext">Once submitted, you will immediately receive your verified score card.</p>
-        </div>
-        <div class="modal-footer">
-          <button id="modalConfirmSubmitBtn" type="button" class="modal-action-btn primary">Yes, Submit Final Exam</button>
-          <button type="button" class="modal-action-btn secondary" data-close="submitConfirmModal">Keep Reviewing</button>
-        </div>
+      <!-- Group: Enablement & Support -->
+      <div class="nav-group">
+        <div class="nav-group-title">Knowledge &amp; Support</div>
+        <ul class="nav-list">
+          <li>
+            <a class="nav-link" data-page="training" onclick="AppRouter.navigate('training')">
+              <span class="nav-icon">🎓</span>
+              <span>Policy &amp; Training Center</span>
+            </a>
+          </li>
+          <li>
+            <a class="nav-link" data-page="ai-assistant" onclick="AppRouter.navigate('ai-assistant')">
+              <span class="nav-icon">🤖</span>
+              <span>AI Onboarding Buddy</span>
+            </a>
+          </li>
+          <li data-role-req="it_admin,super_admin,hr_admin,employee">
+            <a class="nav-link" data-page="it-setup" onclick="AppRouter.navigate('it-setup')">
+              <span class="nav-icon">💻</span>
+              <span>IT &amp; Equipment Setup</span>
+            </a>
+          </li>
+          <li>
+            <a class="nav-link" data-page="notifications" onclick="AppRouter.navigate('notifications')">
+              <span class="nav-icon">🔔</span>
+              <span>Notification Center</span>
+              <span class="nav-badge alert" id="navUnreadNotifsBadge" style="display:none;">0</span>
+            </a>
+          </li>
+        </ul>
       </div>
 
-      <!-- Exit Confirmation Modal -->
-      <div id="exitConfirmModal" class="exam-modal-card" style="display: none;">
-        <div class="modal-header">
-          <h3>Exit Assessment?</h3>
-          <button type="button" class="modal-close-btn" data-close="exitConfirmModal">×</button>
-        </div>
-        <div class="modal-body">
-          <p>⚠️ Your exam is currently running!</p>
-          <p>If you exit now, your current answers and timer progress will be lost.</p>
-        </div>
-        <div class="modal-footer">
-          <button id="modalConfirmExitBtn" type="button" class="modal-action-btn danger">Exit Anyway</button>
-          <button type="button" class="modal-action-btn secondary" data-close="exitConfirmModal">Resume Exam</button>
+      <!-- Group: Administration & Governance -->
+      <div class="nav-group" id="navGroupAdmin" data-role-req="hr_admin,super_admin,manager,finance">
+        <div class="nav-group-title">Governance &amp; Reports</div>
+        <ul class="nav-list">
+          <li data-role-req="hr_admin,super_admin,finance">
+            <a class="nav-link" data-page="reports" onclick="AppRouter.navigate('reports')">
+              <span class="nav-icon">📈</span>
+              <span>Reports &amp; Analytics</span>
+            </a>
+          </li>
+          <li data-role-req="super_admin,hr_admin">
+            <a class="nav-link" data-page="users" onclick="AppRouter.navigate('users')">
+              <span class="nav-icon">🛡️</span>
+              <span>User &amp; Role Control</span>
+            </a>
+          </li>
+          <li data-role-req="super_admin,hr_admin">
+            <a class="nav-link" data-page="settings" onclick="AppRouter.navigate('settings')">
+              <span class="nav-icon">⚙️</span>
+              <span>Company Templates</span>
+            </a>
+          </li>
+        </ul>
+      </div>
+    </nav>
+
+    <!-- Sidebar User Footer -->
+    <div class="sidebar-footer">
+      <div class="user-mini-card">
+        <div class="user-avatar-circle" id="sidebarAvatar">EM</div>
+        <div class="user-mini-info">
+          <div class="user-mini-name" id="sidebarUserName">Dr. Evelyn Vance</div>
+          <div class="user-mini-role" id="sidebarUserRole">Super Admin</div>
         </div>
       </div>
     </div>
-  </section>
+  </aside>
 
-  <!-- ADMIN CONSOLE DASHBOARD -->
-  <section id="adminMenu" class="admin-page menu-page" style="display:none;">
-    <div class="admin-console-wrap">
+  <!-- =========================================================================
+       MAIN APPLICATION LAYOUT
+       ========================================================================= -->
+  <div class="app-main">
 
-      <!-- Admin Console Header -->
-      <div class="admin-console-header">
-        <div class="admin-header-left">
-          <span class="admin-badge-pill">🛡️ Admin Console</span>
-          <div>
-            <h2 id="adminConsoleName">HR Director — Dr. Evelyn Vance</h2>
-            <p id="adminConsoleRole">System Administrator • Full Permissions Active</p>
-          </div>
-        </div>
-        <button id="adminLogoutBtn" type="button" class="admin-logout-btn">⬅ Logout Admin</button>
-      </div>
-
-      <!-- Permission Chips Row -->
-      <div class="admin-perm-row">
-        <span class="admin-perm-chip active">✓ Employee Management</span>
-        <span class="admin-perm-chip active">✓ Policy &amp; Exam Override</span>
-        <span class="admin-perm-chip active">✓ System Audit Logs</span>
-        <span class="admin-perm-chip active">✓ Floor &amp; Shift Auth</span>
-        <span class="admin-perm-chip active">✓ Master Task Approval</span>
-      </div>
-
-      <!-- Stats Overview Cards -->
-      <div class="admin-stats-grid">
-        <div class="admin-stat-card">
-          <span class="admin-stat-num" id="adminStatTotal">0</span>
-          <span class="admin-stat-lbl">Total Employees</span>
-        </div>
-        <div class="admin-stat-card green">
-          <span class="admin-stat-num" id="adminStatActive">0</span>
-          <span class="admin-stat-lbl">Active Accounts</span>
-        </div>
-        <div class="admin-stat-card amber">
-          <span class="admin-stat-num" id="adminStatPending">0</span>
-          <span class="admin-stat-lbl">Pending Verification</span>
-        </div>
-        <div class="admin-stat-card blue">
-          <span class="admin-stat-num" id="adminStatAvgScore">—</span>
-          <span class="admin-stat-lbl">Avg. Exam Score</span>
+    <!-- Top Sticky Header -->
+    <header class="app-header">
+      <div class="header-left">
+        <button type="button" class="sidebar-toggle-btn" id="sidebarOpenBtn">☰</button>
+        <div class="header-search">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="globalSearchInput" placeholder="Search employees, tasks, policies..." onkeyup="GlobalApp.handleSearch(event)">
         </div>
       </div>
 
-      <!-- System Controls -->
-      <div class="admin-controls-bar">
-        <button type="button" class="admin-ctrl-btn primary" id="adminRefreshBtn">🔄 Refresh Data</button>
-        <button type="button" class="admin-ctrl-btn secondary" id="adminClearScoresBtn">🗑️ Reset All Exam Scores</button>
-        <button type="button" class="admin-ctrl-btn danger" id="adminClearUsersBtn">⚠️ Clear Employee Registry</button>
-      </div>
-
-      <!-- Employee Registry Table -->
-      <div class="admin-table-section">
-        <h3 class="admin-section-title">📋 Employee Registry</h3>
-        <div class="admin-table-wrap">
-          <table class="admin-table" id="adminEmployeeTable">
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Full Name</th>
-                <th>Employee ID</th>
-                <th>Email</th>
-                <th>Department</th>
-                <th>Shift</th>
-                <th>Exam Score</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody id="adminEmployeeTableBody">
-              <tr><td colspan="8" class="admin-table-empty">No employee records found.</td></tr>
-            </tbody>
-          </table>
+      <div class="header-right">
+        <!-- Live Role Switcher -->
+        <div class="role-switcher-box" title="Quickly preview portal as different enterprise roles">
+          <span>Active Role:</span>
+          <select id="roleSwitcherSelect" class="role-switcher-select" onchange="AuthSystem.switchRoleDemo(this.value)">
+            <option value="super_admin">Super Admin (Dr. Evelyn)</option>
+            <option value="hr_admin">HR Admin (Sarah Jenkins)</option>
+            <option value="employee">New Employee (Alex Mercer)</option>
+            <option value="manager">Manager (David Kumar)</option>
+            <option value="it_admin">IT Admin (Marcus Vance)</option>
+            <option value="finance">Finance/Payroll (Rachel Adams)</option>
+          </select>
         </div>
-      </div>
 
-      <!-- Audit Log Section -->
-      <div class="admin-audit-section">
-        <h3 class="admin-section-title">📜 System Audit Log</h3>
-        <div class="admin-audit-log" id="adminAuditLog">
-          <p class="admin-audit-empty">No audit events recorded yet.</p>
-        </div>
-      </div>
-
-    </div>
-  </section>
-
-  <!-- AUTHENTICATION MODAL (SIGN IN / REGISTER) -->
-  <div id="authModalOverlay" class="auth-modal-overlay" style="display: none;">
-    <div class="auth-modal-card">
-      <div class="auth-modal-header">
-        <div class="auth-modal-title-wrap">
-          <div class="auth-logo-icon">🛡️</div>
-          <div>
-            <h3 id="authModalTitle">Employee Authentication</h3>
-            <p>Access your personalized HR onboarding records</p>
-          </div>
-        </div>
-        <button id="authModalCloseBtn" type="button" class="auth-close-btn" title="Close">✕</button>
-      </div>
-
-      <!-- Auth Tabs Switcher -->
-      <div class="auth-tabs">
-        <button id="tabSignInBtn" type="button" class="auth-tab-btn active">Employee Sign In</button>
-        <button id="tabRegisterBtn" type="button" class="auth-tab-btn">Register Account</button>
-      </div>
-
-      <!-- Feedback / Alert Banner -->
-      <div id="authAlertBanner" class="auth-alert-banner" style="display: none;"></div>
-
-      <!-- SIGN IN FORM (EMPLOYEE) -->
-      <form id="signInForm" class="auth-form">
-        <div class="auth-field">
-          <label for="loginEmail">Company Email or Employee ID</label>
-          <input
-            id="loginEmail"
-            type="text"
-            placeholder="e.g. alex.mercer@company.com or EMP-1042"
-            autocomplete="username"
-            required
-          >
-        </div>
-        <div class="auth-field">
-          <label for="loginPassword">Password</label>
-          <div class="password-input-wrap">
-            <input
-              id="loginPassword"
-              type="password"
-              placeholder="Enter your account password"
-              autocomplete="current-password"
-              required
-            >
-            <button type="button" class="toggle-password-btn" data-target="loginPassword">👁</button>
-          </div>
-        </div>
-        <div class="auth-form-extra">
-          <label class="remember-label">
-            <input id="rememberMeCheck" type="checkbox" checked>
-            <span>Keep me signed in</span>
-          </label>
-          <span class="auth-hint-link">Forgot password? Contact Floor 3 IT</span>
-        </div>
-        <button type="submit" class="auth-submit-btn primary">
-          <span>🔓</span> Sign In as Employee
+        <!-- Notification Bell -->
+        <button type="button" class="header-action-btn" title="View notifications" onclick="AppRouter.navigate('notifications')">
+          <span>🔔</span>
+          <span class="notif-badge-dot" id="headerNotifDot" style="display:none;"></span>
         </button>
-        <div class="demo-quick-login">
-          <span>Demo Account:</span>
-          <button type="button" id="quickDemoLoginBtn" class="quick-demo-btn">
-            Sign In as <strong>Alex Mercer</strong> (Engineer)
-          </button>
-        </div>
-      </form>
 
-      <!-- REGISTER FORM -->
-      <form id="registerForm" class="auth-form" style="display: none;">
-        <div class="auth-grid-2">
-          <div class="auth-field">
-            <label for="regFullName">Full Legal Name</label>
-            <input
-              id="regFullName"
-              type="text"
-              placeholder="e.g. Alex Mercer"
-              required
-            >
-          </div>
-          <div class="auth-field">
-            <label for="regEmpId">Employee ID</label>
-            <input
-              id="regEmpId"
-              type="text"
-              placeholder="e.g. EMP-2048"
-              required
-            >
+        <!-- Dark Mode Toggle -->
+        <button type="button" class="header-action-btn btn-theme-toggle" id="themeToggleBtn" title="Toggle Light/Dark Theme" onclick="GlobalApp.toggleTheme()">
+          <span>🌓</span>
+        </button>
+
+        <!-- Guided Tour -->
+        <button type="button" class="btn btn-secondary btn-sm" onclick="GuidedTour.start()">
+          <span>❓ Tour</span>
+        </button>
+
+        <!-- Sign Out / In Button -->
+        <button type="button" class="btn-logout" id="headerAuthBtn" onclick="AuthSystem.toggleAuthAction()">
+          Logout
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Dynamic Content Views Container -->
+    <main class="app-content">
+
+      <!-- =====================================================================
+           PAGE 1: LOGIN & AUTHENTICATION
+           ===================================================================== -->
+      <section class="page-view" id="page-login">
+        <div class="login-view-wrapper">
+          <div class="card">
+            <div class="login-header-box">
+              <div class="auth-logo">🛡️</div>
+              <h2>Enterprise Portal Login</h2>
+              <p class="text-muted">Access your personalized HR onboarding records</p>
+            </div>
+
+            <!-- Tab switcher -->
+            <div class="tab-nav" style="justify-content:center;">
+              <button type="button" class="tab-btn active" id="tabLoginBtn" onclick="AuthSystem.showLoginTab('signin')">Sign In</button>
+              <button type="button" class="tab-btn" id="tabRegisterBtn" onclick="AuthSystem.showLoginTab('register')">Register Account</button>
+            </div>
+
+            <div id="loginAlertBox" style="display:none;" class="badge badge-danger" style="margin-bottom:14px;width:100%;padding:10px;"></div>
+
+            <!-- Sign In Form -->
+            <form id="loginForm" onsubmit="AuthSystem.handleLoginForm(event)">
+              <div class="form-group">
+                <label class="form-label">Email or Employee ID</label>
+                <input type="text" class="form-control" id="loginId" placeholder="e.g. admin@company.com or EMP-1042" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Password</label>
+                <input type="password" class="form-control" id="loginPassword" placeholder="••••••••" required>
+              </div>
+              <div style="display:flex;justify-content:space-between;margin-bottom:18px;font-size:13px;">
+                <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+                  <input type="checkbox" id="rememberMe"> Keep me signed in
+                </label>
+                <a href="javascript:void(0)" onclick="AuthSystem.openForgotPassword()">Forgot Password?</a>
+              </div>
+              <button type="submit" class="btn btn-primary" style="width:100%;margin-bottom:16px;">
+                <span>🔓 Authenticate &amp; Launch Portal</span>
+              </button>
+            </form>
+
+            <!-- Register Form (hidden by default) -->
+            <form id="registerForm" style="display:none;" onsubmit="AuthSystem.handleRegisterForm(event)">
+              <div class="form-grid-2">
+                <div class="form-group">
+                  <label class="form-label">Full Legal Name <span class="required">*</span></label>
+                  <input type="text" class="form-control" id="regName" required>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Employee ID <span class="required">*</span></label>
+                  <input type="text" class="form-control" id="regEmpId" placeholder="EMP-XXXX" required>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Work Email <span class="required">*</span></label>
+                <input type="email" class="form-control" id="regEmail" required>
+              </div>
+              <div class="form-grid-2">
+                <div class="form-group">
+                  <label class="form-label">Department</label>
+                  <select class="form-control" id="regDept">
+                    <option value="Software Development">Software Development (Floor 3)</option>
+                    <option value="IT Support">IT Support (Floor 3)</option>
+                    <option value="HR & People Operations">HR Support (Floor 2)</option>
+                    <option value="Finance & Payroll">Finance (Floor 3)</option>
+                    <option value="Operations & Admin">Operations (Floor 3)</option>
+                    <option value="Product & Design">Design (Floor 4)</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Shift</label>
+                  <select class="form-control" id="regShift">
+                    <option value="First Shift (8:50 AM - 5:50 PM)">First Shift (8:50 AM - 5:50 PM)</option>
+                    <option value="Second Shift (9:20 AM - 6:30 PM)">Second Shift (9:20 AM - 6:30 PM)</option>
+                    <option value="Night Shift (9:00 PM - 6:00 AM)">Night Shift (9:00 PM - 6:00 AM)</option>
+                  </select>
+                </div>
+              </div>
+              <div class="form-grid-2">
+                <div class="form-group">
+                  <label class="form-label">Password</label>
+                  <input type="password" class="form-control" id="regPass" minlength="6" required>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Confirm Password</label>
+                  <input type="password" class="form-control" id="regPassConfirm" minlength="6" required>
+                </div>
+              </div>
+              <button type="submit" class="btn btn-success" style="width:100%;margin-bottom:16px;">
+                <span>✨ Register &amp; Create Onboarding Record</span>
+              </button>
+            </form>
+
+            <div style="text-align:center;margin-top:14px;border-top:1px solid var(--border-color);padding-top:16px;">
+              <span class="text-muted" style="font-size:12px;font-weight:700;text-transform:uppercase;">Quick One-Click Demo Logins:</span>
+              <div class="demo-role-grid">
+                <button type="button" class="demo-role-btn" onclick="AuthSystem.loginAs('super_admin')">
+                  <strong>Dr. Evelyn Vance</strong>
+                  <span>Super Admin</span>
+                </button>
+                <button type="button" class="demo-role-btn" onclick="AuthSystem.loginAs('hr_admin')">
+                  <strong>Sarah Jenkins</strong>
+                  <span>HR Director</span>
+                </button>
+                <button type="button" class="demo-role-btn" onclick="AuthSystem.loginAs('employee')">
+                  <strong>Alex Mercer</strong>
+                  <span>New Engineer</span>
+                </button>
+                <button type="button" class="demo-role-btn" onclick="AuthSystem.loginAs('manager')">
+                  <strong>David Kumar</strong>
+                  <span>Engineering Manager</span>
+                </button>
+                <button type="button" class="demo-role-btn" onclick="AuthSystem.loginAs('it_admin')">
+                  <strong>Marcus Vance</strong>
+                  <span>IT Admin</span>
+                </button>
+                <button type="button" class="demo-role-btn" onclick="AuthSystem.loginAs('finance')">
+                  <strong>Rachel Adams</strong>
+                  <span>Finance &amp; Payroll</span>
+                </button>
+              </div>
+            </div>
+
           </div>
         </div>
-        <div class="auth-field">
-          <label for="regEmail">Company Work Email</label>
-          <input
-            id="regEmail"
-            type="email"
-            placeholder="e.g. alex.mercer@company.com"
-            autocomplete="email"
-            required
-          >
+      </section>
+
+      <!-- =====================================================================
+           PAGE 2: EXECUTIVE MAIN DASHBOARD
+           ===================================================================== -->
+      <section class="page-view active" id="page-main-dashboard">
+        <div class="view-header">
+          <div class="view-title-group">
+            <div class="breadcrumb-trail">
+              <span>Overview</span>
+              <span class="breadcrumb-separator">›</span>
+              <span>Enterprise Command Center</span>
+            </div>
+            <h1>Executive Onboarding Dashboard</h1>
+            <p>Real-time lifecycle monitoring, task velocity, compliance tracking, and bottlenecks.</p>
+          </div>
+          <div class="view-actions">
+            <button class="btn btn-secondary" onclick="AppRouter.navigate('reports')">📊 Analytics Report</button>
+            <button class="btn btn-primary" onclick="OnboardingModule.openInitiateModal()">➕ Initiate Onboarding</button>
+          </div>
         </div>
-        <div class="auth-grid-2">
-          <div class="auth-field">
-            <label for="regDept">Department</label>
-            <select id="regDept" class="auth-select" required>
-              <option value="">Select Department...</option>
+
+        <!-- KPI Summary Cards -->
+        <div class="kpi-grid">
+          <div class="kpi-card">
+            <div>
+              <div class="kpi-label">Active Onboardings</div>
+              <div class="kpi-value" id="kpiActiveOnboardings">0</div>
+              <div class="kpi-subtext">Employees in progress</div>
+            </div>
+            <div class="kpi-icon-wrap">👥</div>
+          </div>
+          <div class="kpi-card green">
+            <div>
+              <div class="kpi-label">Completed Onboardings</div>
+              <div class="kpi-value" id="kpiCompletedOnboardings">0</div>
+              <div class="kpi-subtext">Successfully integrated</div>
+            </div>
+            <div class="kpi-icon-wrap">🎉</div>
+          </div>
+          <div class="kpi-card amber">
+            <div>
+              <div class="kpi-label">Pending Verifications</div>
+              <div class="kpi-value" id="kpiPendingDocs">0</div>
+              <div class="kpi-subtext">Documents awaiting HR review</div>
+            </div>
+            <div class="kpi-icon-wrap">📁</div>
+          </div>
+          <div class="kpi-card red">
+            <div>
+              <div class="kpi-label">Overdue Tasks</div>
+              <div class="kpi-value" id="kpiOverdueTasks">0</div>
+              <div class="kpi-subtext">Requiring immediate follow-up</div>
+            </div>
+            <div class="kpi-icon-wrap">⚠️</div>
+          </div>
+          <div class="kpi-card purple">
+            <div>
+              <div class="kpi-label">Avg. Progress Rate</div>
+              <div class="kpi-value" id="kpiAvgProgress">0%</div>
+              <div class="kpi-subtext">Across active cohorts</div>
+            </div>
+            <div class="kpi-icon-wrap">📈</div>
+          </div>
+        </div>
+
+        <!-- Recent Onboarding Candidates Table -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Recent Onboarding Candidates</div>
+              <div class="card-desc">Active employees currently undergoing joining, document verification, and training milestones</div>
+            </div>
+            <button class="btn btn-secondary btn-sm" onclick="AppRouter.navigate('directory')">View All Directory →</button>
+          </div>
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Employee</th>
+                  <th>ID</th>
+                  <th>Department</th>
+                  <th>Role</th>
+                  <th>Joining Date</th>
+                  <th>Progress</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="dashboardCandidatesTableBody">
+                <!-- Dynamically rendered -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- System Activity Stream & Bottleneck Alerts -->
+        <div class="form-grid-2">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">🚨 Bottlenecks &amp; Action Required</div>
+              <span class="badge badge-warning" id="dashboardBottlenecksBadge">Live</span>
+            </div>
+            <div id="dashboardBottlenecksList" style="display:flex;flex-direction:column;gap:10px;">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">📜 System Audit &amp; Activity Stream</div>
+              <button class="btn btn-secondary btn-sm" onclick="AppRouter.navigate('reports')">Export Log</button>
+            </div>
+            <div id="dashboardAuditStream" style="display:flex;flex-direction:column;gap:8px;max-height:280px;overflow-y:auto;">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- =====================================================================
+           PAGE 3: EMPLOYEE ONBOARDING DASHBOARD (NEW HIRE HUB)
+           ===================================================================== -->
+      <section class="page-view" id="page-employee-dashboard">
+        <div class="employee-hero-banner">
+          <div class="hero-welcome-title" id="empHeroName">Welcome to the Team, Alex! 👋</div>
+          <p class="hero-welcome-sub">
+            Your journey at Enterprise Corp begins here. Complete your onboarding checklist, upload required compliance records, and explore your workspace guidelines.
+          </p>
+          <div class="hero-stats-row">
+            <div class="hero-stat-item">
+              <span class="hero-stat-num" id="empProgressPercent">0%</span>
+              <span class="hero-stat-lbl">Onboarding Completed</span>
+            </div>
+            <div class="hero-stat-item">
+              <span class="hero-stat-num" id="empOpenTasks">0</span>
+              <span class="hero-stat-lbl">Pending Tasks</span>
+            </div>
+            <div class="hero-stat-item">
+              <span class="hero-stat-num" id="empDocsPending">0</span>
+              <span class="hero-stat-lbl">Missing Documents</span>
+            </div>
+            <div class="hero-stat-item">
+              <span class="hero-stat-num" id="empPolicyExamScore">—</span>
+              <span class="hero-stat-lbl">Policy Exam</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Onboarding Milestones Stepper -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Your 4-Stage Onboarding Roadmap</div>
+            <span class="badge badge-primary">Stage 2 Active</span>
+          </div>
+          <div class="milestones-stepper">
+            <div class="step-item completed" onclick="AppRouter.navigate('formalities')">
+              <div class="step-circle">✓</div>
+              <div class="step-label">1. Offer &amp; Formalities</div>
+            </div>
+            <div class="step-item active" onclick="AppRouter.navigate('documents')">
+              <div class="step-circle">2</div>
+              <div class="step-label">2. Document Uploads</div>
+            </div>
+            <div class="step-item" onclick="AppRouter.navigate('it-setup')">
+              <div class="step-circle">3</div>
+              <div class="step-label">3. IT &amp; Credentials</div>
+            </div>
+            <div class="step-item" onclick="AppRouter.navigate('training')">
+              <div class="step-circle">4</div>
+              <div class="step-label">4. Policy Exam &amp; Induction</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-grid-2">
+          <!-- Pending Action Items Checklist -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">✅ Immediate Action Required</div>
+              <button class="btn btn-secondary btn-sm" onclick="AppRouter.navigate('tasks')">View All Tasks</button>
+            </div>
+            <div id="empActionChecklist" style="display:flex;flex-direction:column;gap:10px;">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+
+          <!-- Schedule & Workplace Highlights -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">📅 Orientation &amp; Schedule</div>
+              <span class="badge badge-info">Floor 2 &amp; 3</span>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:12px;font-size:13.5px;">
+              <div style="padding:10px;border-left:3px solid var(--primary);background:var(--bg-subtle);border-radius:var(--radius-sm);">
+                <strong>Day 1: HR Induction &amp; ID Card Handover</strong>
+                <p class="text-muted" style="margin:2px 0 0;">10:00 AM — Main Boardroom (Floor 3) with HR Director Dr. Vance</p>
+              </div>
+              <div style="padding:10px;border-left:3px solid var(--secondary);background:var(--bg-subtle);border-radius:var(--radius-sm);">
+                <strong>Day 1: IT Hardware &amp; Credentials Handover</strong>
+                <p class="text-muted" style="margin:2px 0 0;">2:00 PM — IT Service Desk (Floor 3) with Marcus Vance</p>
+              </div>
+              <div style="padding:10px;border-left:3px solid var(--warning);background:var(--bg-subtle);border-radius:var(--radius-sm);">
+                <strong>Day 2: Team Introduction &amp; Manager 1-on-1</strong>
+                <p class="text-muted" style="margin:2px 0 0;">11:30 AM — Engineering Bay (Floor 3) with David Kumar</p>
+              </div>
+              <div style="margin-top:10px;display:flex;gap:10px;">
+                <button class="btn btn-primary btn-sm" onclick="AppRouter.navigate('ai-assistant')">Ask AI Buddy</button>
+                <button class="btn btn-secondary btn-sm" onclick="AppRouter.navigate('training')">Read Handbook</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- =====================================================================
+           PAGE 4: EMPLOYEE PROFILE & INFORMATION FORMS
+           ===================================================================== -->
+      <section class="page-view" id="page-profile">
+        <div class="view-header">
+          <div class="view-title-group">
+            <div class="breadcrumb-trail">
+              <span>Employee Portal</span>
+              <span class="breadcrumb-separator">›</span>
+              <span>Personal Profile</span>
+            </div>
+            <h1>Employee Profile &amp; Information Forms</h1>
+            <p>Keep your personal, emergency, educational, bank, and employment details verified and updated.</p>
+          </div>
+          <div class="view-actions">
+            <button class="btn btn-secondary" onclick="ProfileModule.saveDraft()">💾 Save Draft</button>
+            <button class="btn btn-success" onclick="ProfileModule.saveAndSubmit()">✅ Save &amp; Submit Profile</button>
+          </div>
+        </div>
+
+        <!-- Profile Tabs -->
+        <div class="card">
+          <div class="tab-nav">
+            <button class="tab-btn active" onclick="ProfileModule.switchTab('personal')">1. Personal &amp; Contact</button>
+            <button class="tab-btn" onclick="ProfileModule.switchTab('emergency')">2. Emergency Contacts</button>
+            <button class="tab-btn" onclick="ProfileModule.switchTab('education')">3. Education &amp; Experience</button>
+            <button class="tab-btn" onclick="ProfileModule.switchTab('bank')">4. Bank &amp; Payroll</button>
+            <button class="tab-btn" onclick="ProfileModule.switchTab('assignment')">5. Organization Assignment</button>
+          </div>
+
+          <form id="profileMainForm">
+            <!-- Tab 1: Personal -->
+            <div class="tab-pane active" id="profileTabPersonal">
+              <div class="form-grid-3">
+                <div class="form-group">
+                  <label class="form-label">First Name <span class="required">*</span></label>
+                  <input type="text" class="form-control" id="profFirstName" required>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Last Name <span class="required">*</span></label>
+                  <input type="text" class="form-control" id="profLastName" required>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Date of Birth <span class="required">*</span></label>
+                  <input type="date" class="form-control" id="profDob" required>
+                </div>
+              </div>
+              <div class="form-grid-3">
+                <div class="form-group">
+                  <label class="form-label">Personal Email <span class="required">*</span></label>
+                  <input type="email" class="form-control" id="profEmail" required>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Phone Number <span class="required">*</span></label>
+                  <input type="tel" class="form-control" id="profPhone" placeholder="+91 9876543210" required>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Blood Group</label>
+                  <select class="form-control" id="profBloodGroup">
+                    <option value="O+">O+</option>
+                    <option value="O-">O-</option>
+                    <option value="A+">A+</option>
+                    <option value="A-">A-</option>
+                    <option value="B+">B+</option>
+                    <option value="B-">B-</option>
+                    <option value="AB+">AB+</option>
+                    <option value="AB-">AB-</option>
+                  </select>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Residential Address <span class="required">*</span></label>
+                <textarea class="form-control" id="profAddress" rows="2" required></textarea>
+              </div>
+            </div>
+
+            <!-- Tab 2: Emergency -->
+            <div class="tab-pane" id="profileTabEmergency">
+              <div class="form-grid-2">
+                <div class="form-group">
+                  <label class="form-label">Emergency Contact Name <span class="required">*</span></label>
+                  <input type="text" class="form-control" id="profEmergName" placeholder="e.g. Eleanor Mercer" required>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Relationship <span class="required">*</span></label>
+                  <input type="text" class="form-control" id="profEmergRel" placeholder="e.g. Spouse / Parent" required>
+                </div>
+              </div>
+              <div class="form-grid-2">
+                <div class="form-group">
+                  <label class="form-label">Primary Emergency Phone <span class="required">*</span></label>
+                  <input type="tel" class="form-control" id="profEmergPhone" required>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Secondary Contact Number</label>
+                  <input type="tel" class="form-control" id="profEmergAltPhone">
+                </div>
+              </div>
+            </div>
+
+            <!-- Tab 3: Education & Experience -->
+            <div class="tab-pane" id="profileTabEducation">
+              <div class="form-grid-2">
+                <div class="form-group">
+                  <label class="form-label">Highest Qualification <span class="required">*</span></label>
+                  <input type="text" class="form-control" id="profEduDegree" placeholder="e.g. B.Tech Computer Science" required>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">University / Institution <span class="required">*</span></label>
+                  <input type="text" class="form-control" id="profEduUniv" placeholder="e.g. National Institute of Tech" required>
+                </div>
+              </div>
+              <div class="form-grid-2">
+                <div class="form-group">
+                  <label class="form-label">Previous Organization</label>
+                  <input type="text" class="form-control" id="profPrevCompany" placeholder="e.g. CloudTech Solutions">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Total Years of Experience</label>
+                  <input type="number" step="0.5" class="form-control" id="profExperience" placeholder="e.g. 3.5">
+                </div>
+              </div>
+            </div>
+
+            <!-- Tab 4: Bank & Payroll -->
+            <div class="tab-pane" id="profileTabBank">
+              <div class="badge badge-warning" style="margin-bottom:14px;padding:8px 12px;display:block;">
+                🔒 Confidential: Bank details are encrypted and accessible only by Finance &amp; Authorized HR.
+              </div>
+              <div class="form-grid-2">
+                <div class="form-group">
+                  <label class="form-label">Bank Name <span class="required">*</span></label>
+                  <input type="text" class="form-control" id="profBankName" placeholder="e.g. HDFC Bank" required>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Account Number <span class="required">*</span></label>
+                  <input type="text" class="form-control" id="profAccountNum" placeholder="••••••••••••" required>
+                </div>
+              </div>
+              <div class="form-grid-2">
+                <div class="form-group">
+                  <label class="form-label">IFSC Code <span class="required">*</span></label>
+                  <input type="text" class="form-control" id="profIfsc" placeholder="HDFC0001234" required>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Permanent Account Number (PAN) <span class="required">*</span></label>
+                  <input type="text" class="form-control" id="profPan" placeholder="ABCDE1234F" required>
+                </div>
+              </div>
+            </div>
+
+            <!-- Tab 5: Organization Assignment (Readonly / HR editable) -->
+            <div class="tab-pane" id="profileTabAssignment">
+              <div class="form-grid-3">
+                <div class="form-group">
+                  <label class="form-label">Department</label>
+                  <input type="text" class="form-control" id="profDept" readonly>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Designation / Role</label>
+                  <input type="text" class="form-control" id="profRole" readonly>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Reporting Manager</label>
+                  <input type="text" class="form-control" id="profManager" readonly>
+                </div>
+              </div>
+              <div class="form-grid-3">
+                <div class="form-group">
+                  <label class="form-label">Shift Timing</label>
+                  <input type="text" class="form-control" id="profShift" readonly>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Date of Joining</label>
+                  <input type="date" class="form-control" id="profJoiningDate" readonly>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Floor Location</label>
+                  <input type="text" class="form-control" id="profFloor" readonly>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <!-- =====================================================================
+           PAGE 5: EMPLOYEE DIRECTORY & DETAILS
+           ===================================================================== -->
+      <section class="page-view" id="page-directory">
+        <div class="view-header">
+          <div class="view-title-group">
+            <div class="breadcrumb-trail">
+              <span>Management</span>
+              <span class="breadcrumb-separator">›</span>
+              <span>Directory</span>
+            </div>
+            <h1>Employee Directory &amp; Onboarding Tracker</h1>
+            <p>Filter, search, monitor onboarding health, and view detailed candidate profiles.</p>
+          </div>
+          <div class="view-actions">
+            <button class="btn btn-primary" onclick="OnboardingModule.openInitiateModal()">➕ Initiate Onboarding</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="table-filter-bar">
+            <div class="filter-search-wrap">
+              <span class="search-icon">🔍</span>
+              <input type="text" id="dirSearchInput" placeholder="Search by name, ID, or title..." onkeyup="DirectoryModule.applyFilters()">
+            </div>
+            <div class="filter-controls">
+              <select class="filter-select" id="dirDeptFilter" onchange="DirectoryModule.applyFilters()">
+                <option value="all">All Departments</option>
+                <option value="Software Development">Software Development</option>
+                <option value="IT Support">IT Support</option>
+                <option value="HR & People Operations">HR Support</option>
+                <option value="Finance & Payroll">Finance &amp; Payroll</option>
+                <option value="Operations & Admin">Operations &amp; Admin</option>
+                <option value="Product & Design">Product &amp; Design</option>
+              </select>
+              <select class="filter-select" id="dirStatusFilter" onchange="DirectoryModule.applyFilters()">
+                <option value="all">All Onboarding Statuses</option>
+                <option value="In Progress">In Progress</option>
+                <option value="Completed">Completed</option>
+                <option value="Action Required">Action Required</option>
+              </select>
+              <button class="btn btn-secondary btn-sm" onclick="DirectoryModule.resetFilters()">Reset</button>
+            </div>
+          </div>
+
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Employee</th>
+                  <th>ID</th>
+                  <th>Department</th>
+                  <th>Designation</th>
+                  <th>Reporting Manager</th>
+                  <th>Joining Date</th>
+                  <th>Progress</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="directoryTableBody">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- =====================================================================
+           PAGE 6: DOCUMENT UPLOAD & VERIFICATION
+           ===================================================================== -->
+      <section class="page-view" id="page-documents">
+        <div class="view-header">
+          <div class="view-title-group">
+            <div class="breadcrumb-trail">
+              <span>Compliance</span>
+              <span class="breadcrumb-separator">›</span>
+              <span>Verification</span>
+            </div>
+            <h1>Document Verification Hub</h1>
+            <p>Upload mandatory verification records and review employee submissions with real-time audit trails.</p>
+          </div>
+          <div class="view-actions">
+            <button class="btn btn-primary" onclick="DocumentsModule.openUploadModal()">📤 Upload New Document</button>
+          </div>
+        </div>
+
+        <div class="kpi-grid">
+          <div class="kpi-card green">
+            <div>
+              <div class="kpi-label">Verified Documents</div>
+              <div class="kpi-value" id="docKpiVerified">0</div>
+              <div class="kpi-subtext">Approved by HR</div>
+            </div>
+            <div class="kpi-icon-wrap">✅</div>
+          </div>
+          <div class="kpi-card amber">
+            <div>
+              <div class="kpi-label">Under Review</div>
+              <div class="kpi-value" id="docKpiReview">0</div>
+              <div class="kpi-subtext">Awaiting verification</div>
+            </div>
+            <div class="kpi-icon-wrap">⏳</div>
+          </div>
+          <div class="kpi-card red">
+            <div>
+              <div class="kpi-label">Correction Required</div>
+              <div class="kpi-value" id="docKpiRejected">0</div>
+              <div class="kpi-subtext">Rejected or resubmission</div>
+            </div>
+            <div class="kpi-icon-wrap">⚠️</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Compliance Documents Checklist</div>
+            <div class="filter-controls">
+              <select class="filter-select" id="docStatusFilter" onchange="DocumentsModule.renderList()">
+                <option value="all">All Statuses</option>
+                <option value="Verified">Verified</option>
+                <option value="Under Review">Under Review</option>
+                <option value="Not Submitted">Not Submitted</option>
+                <option value="Rejected">Rejected</option>
+                <option value="Resubmission Required">Resubmission Required</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Document Type</th>
+                  <th>Submitted By</th>
+                  <th>File Name</th>
+                  <th>Submission Date</th>
+                  <th>Status</th>
+                  <th>Reviewer Feedback</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="documentsTableBody">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- =====================================================================
+           PAGE 7: ONBOARDING TASK MANAGEMENT
+           ===================================================================== -->
+      <section class="page-view" id="page-tasks">
+        <div class="view-header">
+          <div class="view-title-group">
+            <div class="breadcrumb-trail">
+              <span>Operations</span>
+              <span class="breadcrumb-separator">›</span>
+              <span>Tasks</span>
+            </div>
+            <h1>Onboarding Task Management</h1>
+            <p>Assign, track, and approve operational induction tasks across HR, IT, Managers, and Employees.</p>
+          </div>
+          <div class="view-actions">
+            <button class="btn btn-secondary" onclick="TasksModule.autoAssignTemplate()">⚡ Apply Department Template</button>
+            <button class="btn btn-primary" onclick="TasksModule.openCreateModal()">➕ Add Task</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="table-filter-bar">
+            <div class="filter-search-wrap">
+              <span class="search-icon">🔍</span>
+              <input type="text" id="taskSearchInput" placeholder="Filter tasks..." onkeyup="TasksModule.renderList()">
+            </div>
+            <div class="filter-controls">
+              <select class="filter-select" id="taskStatusFilter" onchange="TasksModule.renderList()">
+                <option value="all">All Statuses</option>
+                <option value="open">Not Started</option>
+                <option value="in progress">In Progress</option>
+                <option value="pending approval">Pending Approval</option>
+                <option value="blocked">Blocked</option>
+                <option value="done">Completed</option>
+                <option value="overdue">Overdue</option>
+              </select>
+              <select class="filter-select" id="taskPriorityFilter" onchange="TasksModule.renderList()">
+                <option value="all">All Priorities</option>
+                <option value="Urgent">Urgent</option>
+                <option value="High">High</option>
+                <option value="Medium">Medium</option>
+                <option value="Low">Low</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Task Title</th>
+                  <th>Responsible Role</th>
+                  <th>Assigned To</th>
+                  <th>Deadline</th>
+                  <th>Priority</th>
+                  <th>Progress</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="tasksTableBody">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- =====================================================================
+           PAGE 8: JOINING FORMALITIES & APPROVALS
+           ===================================================================== -->
+      <section class="page-view" id="page-formalities">
+        <div class="view-header">
+          <div class="view-title-group">
+            <div class="breadcrumb-trail">
+              <span>Formalities</span>
+              <span class="breadcrumb-separator">›</span>
+              <span>Agreements &amp; Signatures</span>
+            </div>
+            <h1>Joining Formalities &amp; Approval Workflows</h1>
+            <p>Digital signature verification for offer letters, NDAs, and multi-department sign-offs.</p>
+          </div>
+          <div class="view-actions">
+            <button class="btn btn-primary" onclick="FormalitiesModule.openSignModal()">✍️ Sign Agreement</button>
+          </div>
+        </div>
+
+        <div class="form-grid-2">
+          <!-- Offer & Formalities Letters -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">📄 Legal Agreements &amp; Letters</div>
+              <span class="badge badge-success">Digitally Tracked</span>
+            </div>
+            <div id="formalitiesDocList" style="display:flex;flex-direction:column;gap:12px;">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+
+          <!-- Multi-tier Department Sign-Off Stepper -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">🛡️ Multi-Tier Department Approvals</div>
+              <span class="badge badge-primary">Stage Progress</span>
+            </div>
+            <div id="approvalsTimeline" style="display:flex;flex-direction:column;gap:14px;">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- =====================================================================
+           PAGE 9: TRAINING AND POLICY CENTRE (WITH QUIZ EXAM)
+           ===================================================================== -->
+      <section class="page-view" id="page-training">
+        <div class="view-header">
+          <div class="view-title-group">
+            <div class="breadcrumb-trail">
+              <span>Enablement</span>
+              <span class="breadcrumb-separator">›</span>
+              <span>Knowledge Center</span>
+            </div>
+            <h1>Training &amp; Company Policy Center</h1>
+            <p>Read mandatory workplace guidelines, acknowledge compliance policies, and take the 30-Question Policy Assessment.</p>
+          </div>
+          <div class="view-actions">
+            <button class="btn btn-primary" onclick="TrainingModule.openExamMode()">📝 Launch Policy Assessment Exam</button>
+          </div>
+        </div>
+
+        <!-- Policy Handbook Reader & Modules -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">📚 Official Company Policies &amp; Handbooks</div>
+            <span class="badge badge-info">100% Grounded</span>
+          </div>
+          <div class="form-grid-3" id="policyCardsGrid">
+            <!-- Dynamically populated from documents -->
+          </div>
+        </div>
+
+        <!-- Training Courses & Certifications -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">🎓 Mandatory &amp; Departmental Induction Courses</div>
+            <span class="badge badge-success">Tracked for Compliance</span>
+          </div>
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Course Name</th>
+                  <th>Department</th>
+                  <th>Type</th>
+                  <th>Duration</th>
+                  <th>Progress</th>
+                  <th>Status</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="trainingCoursesTableBody">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- =====================================================================
+           PAGE 9B: EMBEDDED POLICY EXAM (PRESERVED FULL EXAM VIEW)
+           ===================================================================== -->
+      <section class="page-view" id="page-exam-mode">
+        <div class="view-header">
+          <div class="view-title-group">
+            <div class="breadcrumb-trail">
+              <button class="btn btn-secondary btn-sm" onclick="AppRouter.navigate('training')">← Back to Training Center</button>
+            </div>
+            <h1>Onboarding Policy Knowledge Assessment</h1>
+            <p>30 Multiple Choice Questions Grounded in Official Company Handbook Policies</p>
+          </div>
+          <div class="view-actions">
+            <button class="btn btn-danger btn-sm" onclick="ExamModule.confirmExit()">Exit Exam</button>
+            <button class="btn btn-primary btn-sm" id="examSubmitTopBtn" onclick="ExamModule.openSubmitModal()">Review &amp; Submit Final</button>
+          </div>
+        </div>
+
+        <div class="exam-shell">
+          <!-- Left Palette -->
+          <div class="exam-palette-card">
+            <div style="font-weight:700;font-size:13px;margin-bottom:8px;">Questions Overview</div>
+            <div class="exam-palette-grid" id="examQuestionPalette"></div>
+            <div style="margin-top:16px;display:flex;flex-direction:column;gap:6px;font-size:11.5px;color:var(--text-muted);">
+              <div><span class="badge badge-success">✓</span> Answered</div>
+              <div><span class="badge badge-danger">✕</span> Skipped</div>
+              <div><span class="badge badge-warning">★</span> Marked Review</div>
+            </div>
+          </div>
+
+          <!-- Main Question Box -->
+          <div class="exam-question-card">
+            <div style="display:flex;justify-content:space-between;margin-bottom:14px;color:var(--text-muted);font-size:13px;">
+              <span id="examQuestionCounter">Question 1 of 30</span>
+              <span id="examLiveScore">Score: 0</span>
+            </div>
+            <div class="progress-bar-container" style="margin-bottom:20px;">
+              <div class="progress-bar-fill" id="examProgressBar" style="width: 3%;"></div>
+            </div>
+
+            <div class="exam-q-title" id="examQuestionText">Loading assessment question...</div>
+            <div class="exam-options-list" id="examOptionsList"></div>
+
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-top:auto;padding-top:20px;border-top:1px solid var(--border-color);">
+              <div style="display:flex;gap:8px;">
+                <button class="btn btn-secondary btn-sm" id="examPrevBtn" onclick="ExamModule.prevQuestion()">← Previous</button>
+                <button class="btn btn-secondary btn-sm" onclick="ExamModule.clearResponse()">Clear Response</button>
+                <button class="btn btn-warning btn-sm" onclick="ExamModule.toggleMarkReview()">Mark for Review</button>
+              </div>
+              <button class="btn btn-primary" id="examNextBtn" onclick="ExamModule.nextQuestion()">Save &amp; Next →</button>
+            </div>
+          </div>
+
+          <!-- Right Timer Card -->
+          <div class="exam-timer-card">
+            <div style="font-size:12px;font-weight:700;text-transform:uppercase;color:var(--text-muted);text-align:center;">Time Remaining</div>
+            <div class="exam-countdown-val" id="examTimerDisplay">20:00</div>
+            <div style="display:flex;flex-direction:column;gap:8px;margin-top:16px;">
+              <button class="btn btn-secondary btn-sm" onclick="ExamModule.showInstructions()">Read Instructions</button>
+              <button class="btn btn-success btn-sm" onclick="ExamModule.openSubmitModal()">Submit Test</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Certificate Container (Hidden until exam submitted) -->
+        <div id="examCertificateView" style="display:none;"></div>
+      </section>
+
+      <!-- =====================================================================
+           PAGE 10: AI ONBOARDING ASSISTANT
+           ===================================================================== -->
+      <section class="page-view" id="page-ai-assistant">
+        <div class="view-header">
+          <div class="view-title-group">
+            <div class="breadcrumb-trail">
+              <span>Support</span>
+              <span class="breadcrumb-separator">›</span>
+              <span>AI Assistant</span>
+            </div>
+            <h1>AI Onboarding Buddy &amp; FAQ Assistant</h1>
+            <p>24/7 intelligent workplace support grounded in verified company policy handbooks.</p>
+          </div>
+          <div class="view-actions">
+            <button class="btn btn-secondary" onclick="AiChatModule.openEscalateModal()">🚨 Escalate to HR Support</button>
+          </div>
+        </div>
+
+        <div class="chat-window">
+          <div class="chat-header">
+            <div style="display:flex;align-items:center;gap:10px;">
+              <div class="brand-icon" style="background:#0f766e;">🤖</div>
+              <div>
+                <strong>HR Assistant Buddy</strong>
+                <div style="font-size:11px;color:var(--text-muted);">Grounded in 24+ Workplace Policy Documents</div>
+              </div>
+            </div>
+            <span class="badge badge-success">Online &amp; Ready</span>
+          </div>
+
+          <div class="chat-messages" id="aiChatMessages">
+            <div class="chat-bubble bot">
+              👋 Hello! I am your AI Onboarding Buddy.
+              You can ask me questions about shift timings, cafeteria floor navigation, leave allowances, dress code, IT setups, or manage your tasks by typing commands like "Show my tasks" or "Create task to submit ID proof".
+              <span class="chat-source-tag">Source: Official Employee Handbook</span>
+            </div>
+          </div>
+
+          <!-- Quick questions prompt pills -->
+          <div class="chat-quick-chips">
+            <button class="quick-chip-btn" onclick="AiChatModule.sendQuick('What are the shift timings?')">🕒 Shift Timings</button>
+            <button class="quick-chip-btn" onclick="AiChatModule.sendQuick('What is the leave policy?')">🏖 Leave Policy</button>
+            <button class="quick-chip-btn" onclick="AiChatModule.sendQuick('Where is the cafeteria and washrooms?')">🍔 Cafeteria Floor</button>
+            <button class="quick-chip-btn" onclick="AiChatModule.sendQuick('What are the IT security guidelines?')">💻 IT &amp; Passwords</button>
+            <button class="quick-chip-btn" onclick="AiChatModule.sendQuick('Create task to submit tax documents')">➕ Create Task</button>
+          </div>
+
+          <form class="chat-input-bar" onsubmit="AiChatModule.handleSend(event)">
+            <input type="text" id="aiChatInput" placeholder="Ask about shift timings, lunch hours, or create tasks..." required>
+            <button type="button" class="btn btn-secondary mic-btn" id="aiMicBtn" onclick="AiChatModule.toggleVoiceInput()" title="Speak using microphone">🎤</button>
+            <button type="submit" class="btn btn-primary">Send</button>
+          </form>
+        </div>
+      </section>
+
+      <!-- =====================================================================
+           PAGE 11: IT EQUIPMENT AND ACCESS MANAGEMENT
+           ===================================================================== -->
+      <section class="page-view" id="page-it-setup">
+        <div class="view-header">
+          <div class="view-title-group">
+            <div class="breadcrumb-trail">
+              <span>Operations</span>
+              <span class="breadcrumb-separator">›</span>
+              <span>IT &amp; Assets</span>
+            </div>
+            <h1>IT Equipment &amp; Credential Provisioning</h1>
+            <p>Track hardware asset allocation, system credentials, and developer access tools.</p>
+          </div>
+          <div class="view-actions" data-role-req="it_admin,super_admin,hr_admin">
+            <button class="btn btn-primary" onclick="ItSetupModule.openAllocateModal()">➕ Allocate Equipment</button>
+          </div>
+        </div>
+
+        <div class="form-grid-2">
+          <!-- Hardware Allocation -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">💻 Allocated Hardware &amp; Peripherals</div>
+              <span class="badge badge-info" id="itAssetsCountBadge">0 Assets</span>
+            </div>
+            <div class="table-responsive">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Item</th>
+                    <th>Serial / Model</th>
+                    <th>Assigned To</th>
+                    <th>Status</th>
+                    <th>Handover Date</th>
+                  </tr>
+                </thead>
+                <tbody id="itHardwareTableBody">
+                  <!-- Dynamically populated -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Software Credentials & Access -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">🔐 Role-Based System Access</div>
+              <span class="badge badge-success">Active Provisioning</span>
+            </div>
+            <div id="itCredentialsList" style="display:flex;flex-direction:column;gap:10px;">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- =====================================================================
+           PAGE 12: NOTIFICATIONS CENTRE
+           ===================================================================== -->
+      <section class="page-view" id="page-notifications">
+        <div class="view-header">
+          <div class="view-title-group">
+            <div class="breadcrumb-trail">
+              <span>System</span>
+              <span class="breadcrumb-separator">›</span>
+              <span>Alerts</span>
+            </div>
+            <h1>Notification &amp; Message Center</h1>
+            <p>System alerts, task deadlines, document approvals, and organizational announcements.</p>
+          </div>
+          <div class="view-actions">
+            <button class="btn btn-secondary btn-sm" onclick="NotificationModule.markAllAsRead()">✓ Mark All as Read</button>
+            <button class="btn btn-outline-danger btn-sm" onclick="NotificationModule.clearAll()">Clear All</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="table-filter-bar">
+            <div class="filter-controls">
+              <button class="btn btn-sm btn-secondary active" onclick="NotificationModule.filter('all')">All</button>
+              <button class="btn btn-sm btn-secondary" onclick="NotificationModule.filter('unread')">Unread Only</button>
+              <button class="btn btn-sm btn-secondary" onclick="NotificationModule.filter('task')">Tasks</button>
+              <button class="btn btn-sm btn-secondary" onclick="NotificationModule.filter('document')">Documents</button>
+              <button class="btn btn-sm btn-secondary" onclick="NotificationModule.filter('approval')">Approvals</button>
+            </div>
+          </div>
+
+          <div class="notification-feed" id="notificationsFeed">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+      </section>
+
+      <!-- =====================================================================
+           PAGE 13: REPORTS & ANALYTICS
+           ===================================================================== -->
+      <section class="page-view" id="page-reports">
+        <div class="view-header">
+          <div class="view-title-group">
+            <div class="breadcrumb-trail">
+              <span>Executive</span>
+              <span class="breadcrumb-separator">›</span>
+              <span>Reports</span>
+            </div>
+            <h1>Reports &amp; Workforce Analytics</h1>
+            <p>Computed onboarding metrics, department completion velocity, and CSV data export.</p>
+          </div>
+          <div class="view-actions">
+            <button class="btn btn-success" onclick="ReportsModule.exportCSV()">📥 Export Onboarding Data (CSV)</button>
+          </div>
+        </div>
+
+        <div class="kpi-grid">
+          <div class="kpi-card">
+            <div>
+              <div class="kpi-label">Total Onboardings Tracked</div>
+              <div class="kpi-value" id="repTotalCohort">0</div>
+              <div class="kpi-subtext">All time records</div>
+            </div>
+            <div class="kpi-icon-wrap">📊</div>
+          </div>
+          <div class="kpi-card green">
+            <div>
+              <div class="kpi-label">Completion Velocity</div>
+              <div class="kpi-value" id="repAvgDays">4.2 Days</div>
+              <div class="kpi-subtext">Avg. time to 100% completion</div>
+            </div>
+            <div class="kpi-icon-wrap">⚡</div>
+          </div>
+          <div class="kpi-card purple">
+            <div>
+              <div class="kpi-label">Policy Assessment Pass Rate</div>
+              <div class="kpi-value" id="repExamPassRate">92%</div>
+              <div class="kpi-subtext">First-attempt certified</div>
+            </div>
+            <div class="kpi-icon-wrap">🏆</div>
+          </div>
+        </div>
+
+        <!-- Department Breakdown Table -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Department-Wise Onboarding Performance</div>
+            <span class="badge badge-info">Calculated from Real Database Records</span>
+          </div>
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Department</th>
+                  <th>Floor</th>
+                  <th>Total Candidates</th>
+                  <th>Completed</th>
+                  <th>In Progress</th>
+                  <th>Avg. Completion Rate</th>
+                  <th>Compliance Health</th>
+                </tr>
+              </thead>
+              <tbody id="reportsDepartmentTableBody">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- =====================================================================
+           PAGE 14: USER, ROLE & PERMISSION MANAGEMENT
+           ===================================================================== -->
+      <section class="page-view" id="page-users">
+        <div class="view-header">
+          <div class="view-title-group">
+            <div class="breadcrumb-trail">
+              <span>Security</span>
+              <span class="breadcrumb-separator">›</span>
+              <span>Access Control</span>
+            </div>
+            <h1>User, Role &amp; Permission Management</h1>
+            <p>Administer accounts, role privileges, and active access states for enterprise security.</p>
+          </div>
+          <div class="view-actions">
+            <button class="btn btn-primary" onclick="UserControlModule.openAddUserModal()">➕ Add User Account</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>User</th>
+                  <th>Email</th>
+                  <th>Role</th>
+                  <th>Department</th>
+                  <th>Status</th>
+                  <th>Last Active</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="userControlTableBody">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- =====================================================================
+           PAGE 15: COMPANY SETTINGS & ONBOARDING TEMPLATES
+           ===================================================================== -->
+      <section class="page-view" id="page-settings">
+        <div class="view-header">
+          <div class="view-title-group">
+            <div class="breadcrumb-trail">
+              <span>Settings</span>
+              <span class="breadcrumb-separator">›</span>
+              <span>Workflow Templates</span>
+            </div>
+            <h1>Company Settings &amp; Onboarding Templates</h1>
+            <p>Configure reusable onboarding task workflows and company workplace parameters.</p>
+          </div>
+          <div class="view-actions">
+            <button class="btn btn-primary" onclick="SettingsModule.openNewTemplateModal()">➕ Create New Template</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Configured Onboarding Templates by Role</div>
+            <span class="badge badge-success">Automated Task Assignment Active</span>
+          </div>
+          <div id="settingsTemplatesList" style="display:flex;flex-direction:column;gap:14px;">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+</div>
+
+<!-- =========================================================================
+     MODALS & OVERLAYS
+     ========================================================================= -->
+
+<!-- Modal: Initiate New Onboarding -->
+<div class="modal-overlay" id="modalInitiateOnboarding">
+  <div class="modal-card">
+    <div class="modal-header">
+      <div class="modal-title">Initiate New Employee Onboarding</div>
+      <button type="button" class="modal-close-btn" onclick="GlobalApp.closeModals()">✕</button>
+    </div>
+    <form onsubmit="OnboardingModule.handleInitiateSubmit(event)">
+      <div class="modal-body">
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label class="form-label">Full Legal Name <span class="required">*</span></label>
+            <input type="text" class="form-control" id="initName" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Employee ID <span class="required">*</span></label>
+            <input type="text" class="form-control" id="initEmpId" placeholder="EMP-XXXX" required>
+          </div>
+        </div>
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label class="form-label">Work Email <span class="required">*</span></label>
+            <input type="email" class="form-control" id="initEmail" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Designation <span class="required">*</span></label>
+            <input type="text" class="form-control" id="initRole" placeholder="e.g. Senior Software Engineer" required>
+          </div>
+        </div>
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label class="form-label">Department <span class="required">*</span></label>
+            <select class="form-control" id="initDept">
               <option value="Software Development">Software Development (Floor 3)</option>
               <option value="IT Support">IT Support (Floor 3)</option>
-              <option value="HR & People Operations">HR &amp; People Operations (Floor 2)</option>
-              <option value="Product & Design">Product &amp; Design (Floor 4)</option>
+              <option value="HR & People Operations">HR Support (Floor 2)</option>
+              <option value="Finance & Payroll">Finance &amp; Payroll (Floor 3)</option>
               <option value="Operations & Admin">Operations &amp; Admin (Floor 3)</option>
-              <option value="Production">Production (Floor 1)</option>
+              <option value="Product & Design">Product &amp; Design (Floor 4)</option>
             </select>
           </div>
-          <div class="auth-field">
-            <label for="regShift">Shift Schedule</label>
-            <select id="regShift" class="auth-select" required>
-              <option value="Shift 1">Shift 1 (8:50 AM – 5:50 PM)</option>
-              <option value="Shift 2">Shift 2 (9:20 AM – 6:30 PM)</option>
-              <option value="Night Shift">Night Shift (9:00 PM – 6:00 AM)</option>
+          <div class="form-group">
+            <label class="form-label">Reporting Manager</label>
+            <input type="text" class="form-control" id="initManager" value="David Kumar">
+          </div>
+        </div>
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label class="form-label">Date of Joining</label>
+            <input type="date" class="form-control" id="initDate" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Shift Schedule</label>
+            <select class="form-control" id="initShift">
+              <option value="First Shift (8:50 AM - 5:50 PM)">First Shift (8:50 AM - 5:50 PM)</option>
+              <option value="Second Shift (9:20 AM - 6:30 PM)">Second Shift (9:20 AM - 6:30 PM)</option>
+              <option value="Night Shift (9:00 PM - 6:00 AM)">Night Shift (9:00 PM - 6:00 AM)</option>
             </select>
           </div>
         </div>
-        <div class="auth-grid-2">
-          <div class="auth-field">
-            <label for="regPassword">Password (Min. 6 chars)</label>
-            <div class="password-input-wrap">
-              <input
-                id="regPassword"
-                type="password"
-                placeholder="Choose secure password"
-                minlength="6"
-                autocomplete="new-password"
-                required
-              >
-              <button type="button" class="toggle-password-btn" data-target="regPassword">👁</button>
-            </div>
-          </div>
-          <div class="auth-field">
-            <label for="regPasswordConfirm">Confirm Password</label>
-            <div class="password-input-wrap">
-              <input
-                id="regPasswordConfirm"
-                type="password"
-                placeholder="Re-enter password"
-                minlength="6"
-                autocomplete="new-password"
-                required
-              >
-              <button type="button" class="toggle-password-btn" data-target="regPasswordConfirm">👁</button>
-            </div>
-          </div>
-        </div>
-        <label class="terms-label">
-          <input id="acceptPolicyCheck" type="checkbox" required>
-          <span>I agree to company data privacy and acceptable asset use policies</span>
-        </label>
-        <button type="submit" class="auth-submit-btn secondary">
-          <span>✨</span> Create Employee Account
-        </button>
-      </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="GlobalApp.closeModals()">Cancel</button>
+        <button type="submit" class="btn btn-primary">🚀 Launch Onboarding Workflow</button>
+      </div>
+    </form>
+  </div>
+</div>
 
-      <div class="auth-modal-footer">
-        <span class="auth-security-badge">🔒 256-Bit Encrypted Client Storage</span>
-        <span class="auth-switch-text" id="authSwitchPrompt">
-          Need an account? <a href="#" id="authSwitchLink">Register here</a>
-        </span>
+<!-- Modal: Upload Document -->
+<div class="modal-overlay" id="modalUploadDocument">
+  <div class="modal-card">
+    <div class="modal-header">
+      <div class="modal-title">Upload Compliance Document</div>
+      <button type="button" class="modal-close-btn" onclick="GlobalApp.closeModals()">✕</button>
+    </div>
+    <form onsubmit="DocumentsModule.handleUploadSubmit(event)">
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Document Category <span class="required">*</span></label>
+          <select class="form-control" id="uploadDocType" required>
+            <option value="Government ID Proof (Aadhar/Passport)">Government ID Proof (Aadhar/Passport)</option>
+            <option value="Educational Certificates / Degrees">Educational Certificates / Degrees</option>
+            <option value="Previous Relieving & Experience Letter">Previous Relieving &amp; Experience Letter</option>
+            <option value="Signed Offer & Appointment Letter">Signed Offer &amp; Appointment Letter</option>
+            <option value="Bank Passbook / Cancelled Cheque">Bank Passbook / Cancelled Cheque</option>
+            <option value="Passport Size Photograph">Passport Size Photograph</option>
+          </select>
+        </div>
+        <div class="dropzone-box" onclick="document.getElementById('docFileInput').click()">
+          <div class="dropzone-icon">📁</div>
+          <div class="dropzone-text" id="dropzoneLabel">Click to select file or drag and drop</div>
+          <div class="dropzone-hint">Supported formats: PDF, JPG, PNG (Max 10MB)</div>
+          <input type="file" id="docFileInput" style="display:none;" onchange="DocumentsModule.handleFileSelect(this)">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Submission Comments / Notes</label>
+          <textarea class="form-control" id="uploadComments" rows="2" placeholder="Optional notes for the HR verification team..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="GlobalApp.closeModals()">Cancel</button>
+        <button type="submit" class="btn btn-primary">Upload &amp; Submit for Verification</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal: HR Document Review & Approval -->
+<div class="modal-overlay" id="modalReviewDocument">
+  <div class="modal-card">
+    <div class="modal-header">
+      <div class="modal-title">Verify Employee Document</div>
+      <button type="button" class="modal-close-btn" onclick="GlobalApp.closeModals()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="reviewDocMeta" style="margin-bottom:16px;"></div>
+      <div class="form-group">
+        <label class="form-label">Review Decision</label>
+        <select class="form-control" id="reviewDecisionSelect">
+          <option value="Verified">✅ Approve &amp; Mark Verified</option>
+          <option value="Resubmission Required">⚠️ Request Resubmission (Unclear scan)</option>
+          <option value="Rejected">❌ Reject Document (Invalid)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">HR Feedback / Reason Notes</label>
+        <textarea class="form-control" id="reviewNotes" placeholder="Enter reason or instructions for the employee..."></textarea>
       </div>
     </div>
-  </div>
-
-  <!-- FIRST-TIME GUIDED SPOTLIGHT TOUR -->
-  <div id="tourOverlay" class="tour-overlay" style="display:none;">
-    <div id="tourSpotlight" class="tour-spotlight"></div>
-    <div id="tourTooltip" class="tour-tooltip">
-      <div class="tour-tooltip-header">
-        <span id="tourStepLabel" class="tour-step-label">Step 1 of 8</span>
-        <button id="tourSkipBtn" type="button" class="tour-skip-btn">Skip Tour ✕</button>
-      </div>
-      <div id="tourIcon" class="tour-icon">👋</div>
-      <h3 id="tourTitle" class="tour-title">Welcome!</h3>
-      <p id="tourDesc" class="tour-desc">Description here</p>
-      <div class="tour-nav">
-        <div class="tour-dots" id="tourDots"></div>
-        <div class="tour-nav-btns">
-          <button id="tourPrevBtn" type="button" class="tour-btn outline" disabled>← Back</button>
-          <button id="tourNextBtn" type="button" class="tour-btn primary">Next →</button>
-        </div>
-      </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" onclick="GlobalApp.closeModals()">Cancel</button>
+      <button type="button" class="btn btn-primary" onclick="DocumentsModule.submitReviewDecision()">Submit Verification Decision</button>
     </div>
   </div>
+</div>
 
-  <!-- RELOAD & RESUBMISSION CONFIRMATION MODAL -->
-  <div id="reloadModalOverlay" class="auth-modal-overlay" style="display: none;">
-    <div class="auth-modal-card reload-confirm-card">
-      <div class="auth-modal-header">
-        <div class="auth-modal-title-wrap">
-          <div class="auth-logo-icon">⚠️</div>
-          <div>
-            <h3>Confirm Reload &amp; Resubmission</h3>
-            <p>Form Resubmission Warning</p>
+<!-- Modal: Add / Edit Task -->
+<div class="modal-overlay" id="modalTaskEditor">
+  <div class="modal-card">
+    <div class="modal-header">
+      <div class="modal-title" id="taskModalTitle">Create Onboarding Task</div>
+      <button type="button" class="modal-close-btn" onclick="GlobalApp.closeModals()">✕</button>
+    </div>
+    <form onsubmit="TasksModule.handleTaskSubmit(event)">
+      <div class="modal-body">
+        <input type="hidden" id="taskEditId">
+        <div class="form-group">
+          <label class="form-label">Task Title <span class="required">*</span></label>
+          <input type="text" class="form-control" id="taskTitleInput" placeholder="e.g. Complete VPN Configuration" required>
+        </div>
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label class="form-label">Assigned Role</label>
+            <select class="form-control" id="taskRoleSelect">
+              <option value="Employee">Employee</option>
+              <option value="IT Admin">IT Admin</option>
+              <option value="HR Admin">HR Admin</option>
+              <option value="Reporting Manager">Reporting Manager</option>
+              <option value="Finance">Finance</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Assigned Employee</label>
+            <input type="text" class="form-control" id="taskAssigneeInput" value="Alex Mercer">
           </div>
         </div>
-        <button id="reloadModalCloseBtn" type="button" class="auth-close-btn" title="Cancel">✕</button>
-      </div>
-      <div class="reload-modal-body">
-        <div class="reload-warning-box">
-          <span class="warning-icon">🔄</span>
-          <p>
-            <strong>The page you are looking for used information you entered.</strong><br>
-            Returning to that page might cause any action you took to be repeated. Do you want to continue with page reload?
-          </p>
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label class="form-label">Priority</label>
+            <select class="form-control" id="taskPrioritySelect">
+              <option value="Medium">Medium</option>
+              <option value="High">High</option>
+              <option value="Urgent">Urgent</option>
+              <option value="Low">Low</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Deadline</label>
+            <input type="date" class="form-control" id="taskDeadlineInput" required>
+          </div>
         </div>
-        <div class="reload-action-note">
-          <span>ℹ️ Reloading will return the application to the <strong>Home Page</strong>.</span>
+        <div class="form-group">
+          <label class="form-label">Progress Percentage (0 - 100)</label>
+          <input type="number" class="form-control" id="taskProgressInput" min="0" max="100" value="0">
         </div>
       </div>
-      <div class="reload-modal-footer">
-        <button id="cancelReloadBtn" type="button" class="tour-btn outline">Cancel</button>
-        <button id="confirmReloadBtn" type="button" class="auth-submit-btn primary reload-confirm-btn">
-          <span>🔄</span> Yes, Reload Page
-        </button>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="GlobalApp.closeModals()">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save Task</button>
       </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal: Digital Signature -->
+<div class="modal-overlay" id="modalDigitalSignature">
+  <div class="modal-card">
+    <div class="modal-header">
+      <div class="modal-title">Sign Document Digitally</div>
+      <button type="button" class="modal-close-btn" onclick="GlobalApp.closeModals()">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:13px;color:var(--text-muted);margin-bottom:12px;">
+        Use your mouse or finger to draw your signature in the box below to legally acknowledge this document.
+      </p>
+      <div class="signature-pad-wrap">
+        <canvas class="signature-canvas" id="signatureCanvas"></canvas>
+        <div class="signature-actions">
+          <span>Sign above the line</span>
+          <button type="button" class="btn btn-secondary btn-sm" onclick="FormalitiesModule.clearSignature()">Clear Canvas</button>
+        </div>
+      </div>
+      <label style="display:flex;align-items:center;gap:8px;font-size:12.5px;cursor:pointer;">
+        <input type="checkbox" id="signLegalConsent" required>
+        I certify that this digital signature corresponds to my legal consent.
+      </label>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" onclick="GlobalApp.closeModals()">Cancel</button>
+      <button type="button" class="btn btn-primary" onclick="FormalitiesModule.applySignature()">Acknowledge &amp; Submit Signature</button>
     </div>
   </div>
+</div>
 
-  <script src="script.js"></script>
+<!-- Modal: Escalate to HR Support -->
+<div class="modal-overlay" id="modalEscalateHr">
+  <div class="modal-card">
+    <div class="modal-header">
+      <div class="modal-title">Escalate Ticket to HR Support</div>
+      <button type="button" class="modal-close-btn" onclick="GlobalApp.closeModals()">✕</button>
+    </div>
+    <form onsubmit="AiChatModule.submitEscalation(event)">
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Subject / Issue Area</label>
+          <input type="text" class="form-control" id="escSubject" placeholder="e.g. Leave Accrual Clarification" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Detailed Inquiry</label>
+          <textarea class="form-control" id="escDetail" rows="3" placeholder="Explain your inquiry. Floor 2 HR Support will be notified directly..." required></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="GlobalApp.closeModals()">Cancel</button>
+        <button type="submit" class="btn btn-primary">Dispatch to HR Desk (Floor 2)</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Guided Tour Spotlight Overlay -->
+<div class="tour-overlay" id="guidedTourOverlay" style="display:none;">
+  <div class="tour-tooltip" id="tourTooltip">
+    <div class="tour-tooltip-header">
+      <span id="tourStepIndicator">Step 1 of 5</span>
+      <button type="button" class="btn btn-secondary btn-sm" onclick="GuidedTour.stop()">✕ Skip</button>
+    </div>
+    <h3 id="tourTitle" style="font-size:15px;margin-bottom:6px;">Tour Title</h3>
+    <p id="tourText" style="font-size:13px;color:var(--text-muted);margin-bottom:16px;">Tour step explanation...</p>
+    <div style="display:flex;justify-content:space-between;">
+      <button type="button" class="btn btn-secondary btn-sm" id="tourPrevBtn" onclick="GuidedTour.prev()">Previous</button>
+      <button type="button" class="btn btn-primary btn-sm" id="tourNextBtn" onclick="GuidedTour.next()">Next →</button>
+    </div>
+  </div>
+</div>
+
+<script src="script.js"></script>
 </body>
 </html>

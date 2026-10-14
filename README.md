@@ -1,114 +1,112 @@
-# HR Onboarding Assistant
+# Enterprise HR Onboarding Platform
 
-This is a fully working basic web application using only HTML, CSS, and JavaScript.
+A modern, secure, and user-friendly enterprise HR onboarding system that manages the complete employee onboarding lifecycle—from offer acceptance and pre-joining formalities to document verification, IT setup, training, policy acknowledgements, and full organizational integration.
 
-## How to Run
+---
 
-Open `index.html` in any browser.
+## 🚀 How to Run
 
-No installation is needed.
+### Method 1: Direct Browser Launch
+Open `index.html` in any modern web browser (Google Chrome, Microsoft Edge, Mozilla Firefox, Apple Safari).  
+**No complex installation or external database setup is required.**
 
-## Main Features
-
-- Answers onboarding questions grounded in provided FAQ and policy documents
-- Handles common spelling mistakes in onboarding questions
-- Work atmosphere section
-- Rules and regulations
-- Office timings: morning 6:00 AM to evening 9:00 PM
-- Shift timings:
-  - First Shift: 8:50 AM to 5:50 PM
-  - Second Shift: 9:20 AM to 6:30 PM
-  - Night Shift: 9:00 PM to 6:00 AM
-- Working days: Monday to Saturday
-- Weekly holidays: Sunday, 1st Saturday, and 3rd Saturday
-- Festival holidays and public holidays list
-- Uniform and dress code
-- Lunch and break policy
-- Leave policy: 18 paid leaves annually, 12 casual and 6 sick, credited monthly
-- Leave application through the HR Portal at least 2 days in advance, except sick leave
-- Generic `timings` question asks whether the user wants Office Timings or Shift Timings
-- Lunch timing: 1:00 PM to 1:45 PM
-- Tea breaks: 11:15 AM to 11:30 AM and 4:15 PM to 4:30 PM
-- Late-in and early-go rules
-- Half-day and LOP leave rules
-- Place of work policy
-- IT and data security policy
-- IT setup and role-based system credentials
-- Employment bond policy
-- Internal organization structure
-- Department types
-- Floor-wise department and facility details
-- Cabin-wise manager, authority, and employee area details
-- Internal navigation for cafeteria, lunch place, washrooms, library, seminar hall, parking, and drinking water
-- Floor-to-floor restrictions and access rules
-- Company infrastructure and internal policies
-- Payroll and joining terms
-- Conversational HR chatbot grounded in the provided documents
-- Onboarding task creation and status tracking
-- Task progress updates
-- Daily work updates for each task
-- Separate quiz exam menu with final percentage out of 100
-
-## Evaluation Coverage
-
-- Groundedness: answers come from the `documents` array in `script.js`
-- Accuracy: each answer cites a source document name in the chat
-- Task tracking: tasks are saved in `localStorage` and keep status, progress, and daily updates
-- Multi-turn conversation: the bot can ask whether to create a task after messages like `I need to submit ID proof`
-- Conversational design: users can ask normal questions like `Where is the cafeteria?`, `What are leave types?`, or `Open task submit ID proof`
-- Clean UI: policy details are not shown on the page; users get answers only when they ask the assistant
-
-## Quiz Flow
-
-The user can open the `Quiz Exam` menu or type:
-
-```text
-Open quiz exam
+### Method 2: Local Web Server
+Double-click `start_server.bat` or run:
+```bash
+python -m http.server 8000
 ```
+Then navigate to: `http://localhost:8000/`
 
-The exam screen shows one question at a time with answer buttons.
+---
 
-After all questions, the bot gives:
+## 👥 Enterprise User Roles & Permissions
 
-- Correct answers
-- Total score
-- Percentage out of 100
-- Result message
+The platform includes seamless 1-click role-switching in the top navigation bar to test all user perspectives:
 
-## Task Examples
+1. **Super Admin (`Dr. Evelyn Vance`)**
+   - System-wide executive analytics and audit logs
+   - User account activation, deactivation, and role management
+   - Company templates and operational parameter configuration
+2. **HR Admin (`Sarah Jenkins`)**
+   - Employee record creation and onboarding initiation
+   - Document review, verification approval, and resubmission requests
+   - Task assignment, progress monitoring, and compliance reporting
+3. **Employee (`Alex Mercer`)**
+   - Personalized onboarding roadmap and task checklist
+   - Multi-tab profile management (Personal, Emergency, Education, Experience, Bank/Payroll)
+   - Secure document uploads with live review status
+   - Digital agreement signing via interactive signature canvas
+   - Training center, company handbook, and 30-question Policy Exam certification
+   - 24/7 AI Onboarding Buddy with speech recognition
+4. **Reporting Manager (`David Kumar`)**
+   - Team onboarding progress monitoring
+   - Engineering induction meetings and task sign-offs
+   - Direct manager check-ins and goal alignments
+5. **IT Admin (`Marcus Vance`)**
+   - Hardware allocation (Laptops, 4K monitors, wireless peripherals, RFID badges)
+   - System credentials provisioning (Google Workspace email, Enterprise VPN, GitHub, Jira)
+   - IT setup task management
+6. **Finance / Payroll (`Rachel Adams`)**
+   - Bank account, IFSC, and PAN verification
+   - Payroll setup and compliance clearance
+   - Financial onboarding audit oversight
 
-```text
-Create a task to submit ID proof
-Show my tasks
-Mark submit ID proof done
-Open task submit ID proof
-Update submit ID proof progress 50
-Add daily update submit ID proof uploaded documents today
-```
+---
 
-Tasks are stored in browser `localStorage`, so they stay after refreshing the page.
+## 📱 15 Enterprise Modules
 
-Each task can also be updated from the sidebar:
+1. **Login & Password Recovery (`#page-login`)**
+   - Clean enterprise authentication, password recovery instructions, registration, and 1-click quick demo logins.
+2. **Executive Main Dashboard (`#page-main-dashboard`)**
+   - Real-time KPI summary cards (Active onboardings, completed cohorts, pending reviews, overdue tasks).
+   - Candidate progress velocity table, live bottleneck identification, and system audit stream.
+3. **Employee Onboarding Hub (`#page-employee-dashboard`)**
+   - Personalized welcome banner, 4-stage onboarding roadmap, urgent action checklist, and Day 1 orientation schedule.
+4. **Employee Profile & Information Forms (`#page-profile`)**
+   - Tabbed inputs: Personal & Contact, Emergency Contacts, Education & Experience, Confidential Bank & Payroll, Organization Assignment.
+   - Save-and-resume draft capabilities and validation checks.
+5. **Employee Directory (`#page-directory`)**
+   - Filter by department, designation, and onboarding status. Search by name or ID. Instant candidate detail inspection drawer.
+6. **Document Verification Hub (`#page-documents`)**
+   - Upload identification, educational degrees, experience records, bank passbooks, and photos.
+   - Live statuses: *Not Submitted*, *Submitted*, *Under Review*, *Verified*, *Rejected*, *Resubmission Required*.
+   - HR verification modal with approval decisions and feedback comments.
+7. **Task & Milestone Management (`#page-tasks`)**
+   - Create, edit, assign, reassign, and delete onboarding tasks.
+   - Statuses: *Not Started*, *In Progress*, *Pending Approval*, *Blocked*, *Completed*, *Overdue*.
+   - Priorities (*Urgent*, *High*, *Medium*, *Low*), deadlines, progress percentages, and automated department templates.
+8. **Formalities & Digital Signatures (`#page-formalities`)**
+   - Official appointment letter, NDA, and asset agreements.
+   - Interactive HTML5 Canvas digital signature pad with legal consent verification.
+   - Multi-tier approval timeline (HR, IT, Manager, Finance).
+9. **Policy & Training Center (`#page-training`)**
+   - Official workplace policies grounded in 24+ handbook documents.
+   - Mandatory and departmental course tracking.
+10. **30-Question Policy Assessment Exam (`#page-exam-mode`)**
+    - 20-minute timed multiple-choice policy exam with question palette navigation, review markers, auto-submit countdown timer, and instant printable Certificate of Compliance.
+11. **AI Onboarding Assistant (`#page-ai-assistant`)**
+    - Conversational assistant grounded in official company handbook policies (shift timings, floor navigation, leaves, uniforms, holidays, cafeteria).
+    - Speech recognition voice input support.
+    - Conversational task creation ("Create task to submit ID proof") and task listing ("Show my tasks").
+    - Escalation ticket dispatcher to Floor 2 HR Support.
+12. **IT Equipment & Access Provisioning (`#page-it-setup`)**
+    - Hardware inventory tracking with serial numbers and handover dates.
+    - Role-based software credential statuses (Email, VPN, Git, Jira).
+13. **Notifications Center (`#page-notifications`)**
+    - Real-time in-app alerts for task updates, document reviews, and deadlines.
+    - Category filtering, mark as read, and unread badge counters.
+14. **Reports & Workforce Analytics (`#page-reports`)**
+    - Computed metrics calculated from live database records.
+    - Department-wise onboarding performance comparison.
+    - 1-click CSV report export.
+15. **User Control & Templates (`#page-users` & `#page-settings`)**
+    - Account activation/deactivation and role governance.
+    - Reusable onboarding templates for Engineering and HR departments.
 
-- Add a task
-- Open the task
-- Update progress percentage
-- Add daily work updates
-- Mark the task done
-- Delete the task
+---
 
-## File Guide
+## 🎨 Design System
 
-- `index.html`: page structure
-- `style.css`: design and layout
-- `script.js`: company policy data, chatbot logic, tasks, and quiz scoring
-
-## Beginner-Friendly Design
-
-All company data is stored in simple JavaScript arrays:
-
-- `documents` contains company policies and answers
-- `quizQuestions` contains quiz questions and correct answers
-- `tasks` contains onboarding task data
-
-This keeps the project easy to understand and easy to modify.
+- **Clean Enterprise SaaS Layout**: Responsive sidebar, sticky header with quick role switcher, notification bell, and theme toggle.
+- **Light & Dark Theme**: Full theme switching with automatic localStorage persistence.
+- **Accessible & Responsive**: Optimized for desktop, tablet, and mobile screens.
